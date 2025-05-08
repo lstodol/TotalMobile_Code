@@ -1,0 +1,13 @@
+{
+	"NotificationDestinations": [],
+	"NotificationRecipients": [
+		"piotr.kwiatkowski@totalmobile.co.uk",
+		"narotam.aggarwal@totalmobile.co.uk",
+		"jakub.gutkowski@totalmobile.co.uk"
+	],
+	"JobDurationThreshold": 300,
+	"JobTimeoutThreshold": 3600,
+	"JobRetentionPeriodInDays": 3,
+	"ClusterName": "main_runner",
+	"TasksParallelStreams": 10
+}

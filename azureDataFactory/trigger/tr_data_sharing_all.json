@@ -1,0 +1,32 @@
+{
+	"name": "tr_data_sharing_all",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "_master_data_sharing",
+					"type": "PipelineReference"
+				},
+				"parameters": {
+					"tenant_product_file_name": "tenant_product.json"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Day",
+				"interval": 1,
+				"startTime": "2024-06-24T00:00:00",
+				"timeZone": "GMT Standard Time",
+				"schedule": {
+					"hours": [
+						6
+					]
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,50 @@
+{
+	"name": "ds_datamart_table_merge_dls_dest",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_analytics_dls",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Tenant": {
+				"type": "string"
+			},
+			"Product": {
+				"type": "string"
+			},
+			"TableName": {
+				"type": "string"
+			},
+			"SchemaName": {
+				"type": "string"
+			},
+			"FileType": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "dls"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(\n    dataset().Tenant, \n    '_', \n    dataset().Product, \n    '_', \n    dataset().SchemaName, \n    '_', \n    dataset().TableName,\n    '_', \n    dataset().FileType,\n    '.parquet'\n)",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat(\n    'raw/',\n    dataset().Product,\n    '/',\n    dataset().SchemaName,\n    '/',\n    dataset().TableName,\n    '/_merge'\n)",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().Tenant",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

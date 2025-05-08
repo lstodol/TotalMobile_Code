@@ -1,0 +1,96 @@
+[
+	{
+		"TenantName": "devrenfrewshire",
+		"ProductName": "carelink",
+		"KeyVaultSourceDBConnString": "sqa6-carelink-source-db-connection",
+		"KeyVaultPrimarySourceDBConnString": "sqa6-carelink-source-db-connection",
+		"IsActive": true,
+		"DataSharing": {
+			"DataSharingEnabled": true,
+			"DataSharingLayer": "bronze",
+			"TenantStorageAccount": "devrenfrewshirest"
+		}
+
+	},
+	{
+		"TenantName": "devrenfrewshire",
+		"ProductName": "totalmobile",
+		"KeyVaultSourceDBConnString": "sqa6-totalmobile-source-db-connection",
+		"KeyVaultPrimarySourceDBConnString": "sqa6-totalmobile-source-db-connection",
+		"IsActive": true,
+		"DataSharing": {
+			"DataSharingEnabled": false,
+			"DataSharingLayer": "bronze",
+			"TenantStorageAccount": "devrenfrewshirest"
+		}
+	},
+	{
+		"TenantName": "devrenfrewshire",
+		"ProductName": "scheduler",
+		"KeyVaultSourceDBConnString": "sqa6-scheduler-source-db-connection",
+		"KeyVaultPrimarySourceDBConnString": "sqa6-scheduler-source-db-connection",
+		"IsActive": true
+	},
+	{
+		"TenantName": "devrenfrewshire",
+		"ProductName": "datamart",
+		"KeyVaultSourceDBConnString": "sqa6-datamart-source-db-connection",
+		"KeyVaultPrimarySourceDBConnString": "sqa6-datamart-source-db-connection",
+		"IsActive": false
+	},
+	{
+		"TenantName": "devtest2",
+		"ProductName": "carelink",
+		"KeyVaultSourceDBConnString": "sqa6-carelink-source-db-connection",
+		"KeyVaultPrimarySourceDBConnString": "sqa6-carelink-source-db-connection",
+		"IsActive": false,
+		"DataSharing": {
+			"DataSharingEnabled": false,
+			"DataSharingLayer": "",
+			"TenantStorageAccount": ""
+		},
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"piotr.kwiatkowski@totalmobile.co.uk"
+			],
+			"JobDurationThreshold": 600,
+			"JobTimeoutThreshold": 1200,
+			"JobRetentionPeriodInDays": 3,
+			"ClusterName": "main_runner",
+			"TasksParallelStreams": 2
+		}
+	},
+	{
+		"TenantName": "devtest2",
+		"ProductName": "totalmobile",
+		"KeyVaultSourceDBConnString": "sqa6-totalmobile-source-db-connection",
+		"KeyVaultPrimarySourceDBConnString": "sqa6-totalmobile-source-db-connection",
+		"IsActive": true
+	},
+	{
+		"TenantName": "devtest2",
+		"ProductName": "scheduler",
+		"KeyVaultSourceDBConnString": "sqa6-scheduler-source-db-connection",
+		"KeyVaultPrimarySourceDBConnString": "sqa6-scheduler-source-db-connection",
+		"IsActive": true
+	},
+	{
+		"TenantName": "devtest2",
+		"ProductName": "datamart",
+		"KeyVaultSourceDBConnString": "sqa6-datamart-source-db-connection",
+		"KeyVaultPrimarySourceDBConnString": "sqa6-datamart-source-db-connection",
+		"IsActive": true,
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"jakub.gutkowski@totalmobile.co.uk"
+			],
+			"JobDurationThreshold": 600,
+			"JobTimeoutThreshold": 1200,
+			"JobRetentionPeriodInDays": 3,
+			"ClusterName": "main_runner",
+			"TasksParallelStreams": 5
+		}
+	}
+]

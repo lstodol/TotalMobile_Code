@@ -1,0 +1,56 @@
+parameters:
+  - name: environment
+    type: string
+  - name: azureSubscription
+    type: string
+  - name: enabled
+    type: boolean
+
+jobs:
+- deployment: DeployADF
+  displayName: ADF Deployment
+  environment: ${{parameters.environment}}
+  condition: ${{parameters.enabled}}
+  dependsOn: PreDeployment
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - download: current
+          artifact: adf_drop
+          displayName: 'Download ADF Build Artifacts'
+        - checkout: self
+        - task: AzurePowerShell@5
+          displayName: 'Stop ADF Triggers'
+          inputs:
+            azureSubscription: ${{ parameters.azureSubscription }}
+            ScriptPath: '$(Pipeline.Workspace)/adf_drop/PrePostDeploymentScript.ps1'
+            ScriptArguments: "-armTemplate $(Pipeline.Workspace)/adf_drop/ARMTemplateForFactory.json \
+              -ResourceGroupName $(resourceGroupName) \
+              -DataFactoryName  $(dataFactoryName) \
+              -predeployment $true \
+              -deleteDeployment $false"
+            azurePowerShellVersion: LatestVersion  
+
+        - task: AzureCLI@2
+          displayName: 'Deploy ADF'
+          inputs:
+            azureSubscription: ${{ parameters.azureSubscription }}
+            scriptType: 'bash'
+            scriptLocation: 'inlineScript'
+            inlineScript: |
+              templateFile='$(Pipeline.Workspace)/adf_drop/ARMTemplateForFactory.json'
+              parametersFile='@$(Build.Repository.LocalPath)/azureDataFactory/ARMTemplateParametersForFactory.$(env).json'
+              az deployment group create --name ADFDeployment --resource-group $(resourceGroupName) --template-file $templateFile --parameters $parametersFile
+
+        - task: AzurePowerShell@5
+          displayName: 'Start Triggers'
+          inputs:
+            azureSubscription: ${{parameters.azureSubscription}}
+            ScriptPath: '$(Pipeline.Workspace)/adf_drop/PrePostDeploymentScript.ps1'
+            ScriptArguments: "-armTemplate $(Pipeline.Workspace)/adf_drop/ARMTemplateForFactory.json \
+              -ResourceGroupName $(resourceGroupName) \
+              -DataFactoryName  $(dataFactoryName) \
+              -predeployment $false \
+              -deleteDeployment $false"
+            azurePowerShellVersion: LatestVersion

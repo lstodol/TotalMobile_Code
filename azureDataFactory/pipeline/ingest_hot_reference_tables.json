@@ -1,0 +1,278 @@
+{
+	"name": "ingest_hot_reference_tables",
+	"properties": {
+		"activities": [
+			{
+				"name": "Switch",
+				"type": "Switch",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@if(\n    and(equals(pipeline().parameters.SchemaName, 'dbo'), equals(pipeline().parameters.TableName, 'rm_work_item')),\n    'RM_WORK_ITEM',\n    'NO_DATA_TYPE_CHANGE'\n)",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "RM_WORK_ITEM",
+							"activities": [
+								{
+									"name": "Ingest RM_WORK_ITEM Table",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"additionalColumns": [
+												{
+													"name": "ADFRunId",
+													"value": {
+														"value": "@pipeline().parameters.ADFRunId",
+														"type": "Expression"
+													}
+												},
+												{
+													"name": "LoadDate",
+													"value": {
+														"value": "@utcNow()",
+														"type": "Expression"
+													}
+												},
+												{
+													"name": "Flag",
+													"value": "I"
+												}
+											],
+											"sqlReaderQuery": {
+												"value": "SELECT [WIT_GUID]\n      ,[WIT_ALLOCATED_TO]\n      ,[WIT_DESCRIPTION]\n      ,[WIT_LOCATION]\n      ,[WIT_GEOX]\n      ,[WIT_GEOY]\n      ,[WIT_CONTACT_TITLE]\n      ,[WIT_CONTACT_NAME]\n      ,[WIT_CONTACT_HPHONE]\n      ,[WIT_CONTACT_WPHONE]\n      ,[WIT_CONTACT_MPHONE]\n      ,[WIT_CONTACT_EMAIL]\n      ,[WIT_CONTACT_URL]\n      ,[WIT_DUE_DATE]\n      ,[WIT_DUE_TIME]\n      ,[WIT_DURATION]\n      ,[WIT_STATUS]\n      ,[WIT_VISIT_STATUS]\n      ,[WIT_VISIT_COMPLETE]\n      ,[WIT_PRIORITY]\n      ,[WIT_EMERGENCY]\n      ,[WIT_SPEC_INSTR]\n      ,[WIT_REFERENCE]\n      ,[WIT_WORKTYPE_REF]\n      ,[WIT_SCHEDULE_START]\n      ,[WIT_SCHEDULE_END]\n      ,[WIT_DISPATCHED]\n      ,[WIT_DISPATCH_DATE]\n      ,[WIT_LOCATION_REF]\n      ,[WIT_LOCATION_NAME]\n      ,[WIT_LOCATION_HOUSE_NO]\n      ,[WIT_LOCATION_ADD_1]\n      ,[WIT_LOCATION_ADD_2]\n      ,[WIT_LOCATION_ADD_3]\n      ,[WIT_LOCATION_ADD_4]\n      ,[WIT_LOCATION_ADD_5]\n      ,[WIT_LOCATION_POST_CODE]\n      ,[WIT_APPOINTMENT_START]\n      ,[WIT_APPOINTMENT_END]\n      ,[WIT_ORIGIN]\n      ,[WIT_MANDATORY_RES_GUID]\n      ,[WIT_AUTO_REF]\n      ,[WIT_APPOINTMENT_PENDING]\n      ,[WIT_CLIENT_REFERENCE]\n      ,[WIT_DELETION_REASON]\n      ,[WIT_DELETION_NOTES]\n      ,[WIT_CATALOGUE_REFERENCE]\n      ,[WIT_COMMITTED]\n      ,[WIT_WOR_GUID]\n      ,[WIT_PENDING_RELATIONS]\n      ,[WIT_DUE_START]\n      ,[WIT_DUE_END]\n      ,[WIT_CONTACT_PREF_NAME]\n      ,[WIT_CONTACT_ID]\n      ,[WIT_CONTACT_ID_LABEL]\n      ,[WIT_CONTACT_DOB]\n      ,[WIT_CONTACT_DOD]\n      ,[WIT_CONTACT_GENDER]\n      ,[WIT_DELETED_BY]\n      ,[WIT_PRO_GUID]\n      ,[WIT_PRO_DEPENDENCIES]\n      ,[WIT_APA_GUID]\n      ,[WIT_GROUP_REFERENCE]\n      ,[WIT_GEOG].ToString() AS [WIT_GEOG]\n      ,[WIT_IN_SCOPE]\n      ,[WIT_BANDING_GROUP]\n      ,[WIT_VALUE]\n  FROM [dbo].[RM_WORK_ITEM]",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"parallelCopies": 1,
+										"dataIntegrationUnits": 2,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_reference_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@toLower(pipeline().parameters.TableName)",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@toLower(pipeline().parameters.SchemaName)",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_reference_table_dls_dest",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"Table": {
+													"value": "@toLower(pipeline().parameters.TableName)",
+													"type": "Expression"
+												},
+												"LoadDate": {
+													"value": "@formatDateTime(utcNow(), 'yyyyMMddHHmmss')",
+													"type": "Expression"
+												},
+												"Schema": {
+													"value": "@toLower(pipeline().parameters.SchemaName)",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						},
+						{
+							"value": "NO_DATA_TYPE_CHANGE",
+							"activities": [
+								{
+									"name": "Ingest Hot Reference Table",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"additionalColumns": [
+												{
+													"name": "ADFRunId",
+													"value": {
+														"value": "@pipeline().parameters.ADFRunId",
+														"type": "Expression"
+													}
+												},
+												{
+													"name": "LoadDate",
+													"value": {
+														"value": "@utcNow()",
+														"type": "Expression"
+													}
+												},
+												{
+													"name": "Flag",
+													"value": "I"
+												}
+											],
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"parallelCopies": 1,
+										"dataIntegrationUnits": 2,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_reference_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_reference_table_dls_dest",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"Table": {
+													"value": "@toLower(pipeline().parameters.TableName)",
+													"type": "Expression"
+												},
+												"LoadDate": {
+													"value": "@formatDateTime(utcNow(), 'yyyyMMddHHmmss')",
+													"type": "Expression"
+												},
+												"Schema": {
+													"value": "@toLower(pipeline().parameters.SchemaName)",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"TenantName": {
+				"type": "string"
+			},
+			"ProductName": {
+				"type": "string"
+			},
+			"TableName": {
+				"type": "string"
+			},
+			"SchemaName": {
+				"type": "string"
+			},
+			"ConnectionString": {
+				"type": "string"
+			},
+			"ADFRunId": {
+				"type": "string"
+			},
+			"LoadDate": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "others"
+		},
+		"annotations": []
+	}
+}

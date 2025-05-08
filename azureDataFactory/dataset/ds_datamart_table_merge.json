@@ -1,0 +1,39 @@
+{
+	"name": "ds_datamart_table_merge",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_analytics_dls",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Tenant": {
+				"type": "string"
+			},
+			"Product": {
+				"type": "string"
+			},
+			"TableName": {
+				"type": "string"
+			},
+			"SchemaName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "dls"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileSystem": {
+					"value": "@dataset().Tenant",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	}
+}

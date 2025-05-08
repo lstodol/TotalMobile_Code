@@ -1,0 +1,45 @@
+{
+	"name": "ds_reference_table_check_dls",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_analytics_dls",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"TenantName": {
+				"type": "string"
+			},
+			"ProductName": {
+				"type": "string"
+			},
+			"SchemaName": {
+				"type": "string"
+			},
+			"TableName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "dls"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(\n    dataset().TenantName, \n    '_', \n    dataset().ProductName, \n    '_', \n    dataset().SchemaName, \n    '_', \n    dataset().TableName, \n    '_', \n    formatDateTime(utcNow(), 'yyyyMMdd'), \n    '.parquet'\n)",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat(\n    'raw/',\n    dataset().ProductName,\n    '/',\n    dataset().SchemaName,\n    '/',\n    dataset().TableName\n)",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().TenantName",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

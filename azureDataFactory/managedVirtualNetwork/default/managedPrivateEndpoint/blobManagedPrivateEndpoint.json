@@ -1,0 +1,7 @@
+{
+	"name": "blobManagedPrivateEndpoint",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/aee60e3f-cf4f-4805-8e74-c98a420b031c/resourceGroups/dev-analytics-u-uks-rg/providers/Microsoft.Storage/storageAccounts/devanalyticsuuksst",
+		"groupId": "dfs"
+	}
+}

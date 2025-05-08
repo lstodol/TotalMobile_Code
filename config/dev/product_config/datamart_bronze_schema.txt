@@ -1,0 +1,553 @@
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_FormResultAnswers(
+    AnswerKey STRING, 
+    DetailKey STRING, 
+    AnswerOrder INT, 
+    Value STRING, 
+    Description STRING, 
+    Score DECIMAL, 
+    DocumentKey STRING, 
+    LocationKey STRING, 
+    LocationTrackingUpdateKey STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_FormResultAnswers';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_FormResultDetails(
+    DetailKey STRING, 
+    FormResultKey STRING, 
+    ParentDetailKey STRING, 
+    GroupInstance INT, 
+    FormElementType STRING, 
+    FormElementReference STRING, 
+    FormElementText STRING, 
+    FormElementDisplayText STRING, 
+    DetailOrder INT, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_FormResultDetails';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_FormResults(
+    FormResultKey STRING, 
+    FormID INT, 
+    FormReference STRING, 
+    FormDescription STRING, 
+    FormRevision INT, 
+    FormPublishedDate TIMESTAMP, 
+    FormResultDate TIMESTAMP, 
+    FormApplication STRING, 
+    FormSolution STRING, 
+    UserID INT, 
+    UserName STRING, 
+    UserForename STRING, 
+    UserSurname STRING, 
+    UserPhone STRING, 
+    UserMobilePhone STRING, 
+    UserWorkPhone STRING, 
+    UserEmail STRING, 
+    UserWorkEmail STRING, 
+    UserJobTitle STRING, 
+    UserAddress STRING, 
+    UserDeviceID STRING, 
+    VisitsActivityLogKey STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_FormResults';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_JobAdditionalProperties(
+    AdditionalPropertiesKey STRING, 
+    Name STRING, 
+    Value STRING, 
+    JobKey STRING, 
+    ParentPropertyKey STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_JobAdditionalProperties';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_JobRelations(
+    RelationKey STRING, 
+    JobKey STRING, 
+    RelatedJobKey STRING, 
+    TypeLink STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_JobRelations';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_Jobs(
+    JobKey STRING, 
+    TypeAddress STRING, 
+    AddressReference STRING, 
+    AddressName STRING, 
+    AddressLine1 STRING, 
+    AddressLine2 STRING, 
+    AddressLine3 STRING, 
+    AddressLine4 STRING, 
+    AddressLine5 STRING, 
+    HouseNo STRING, 
+    PostCode STRING, 
+    Geox FLOAT, 
+    Geoy FLOAT, 
+    ContactTitle STRING, 
+    ContactName STRING, 
+    ContactHomePhone STRING, 
+    ContactWorkPhone STRING, 
+    ContactMobilePhone STRING, 
+    ContactEmail STRING, 
+    ContactURL STRING, 
+    Description STRING, 
+    SpecialInstructions STRING, 
+    DueDate TIMESTAMP, 
+    Reference STRING, 
+    Duration INT, 
+    Status STRING, 
+    VisitStatus STRING, 
+    VisitComplete STRING, 
+    Priority STRING, 
+    Emergency STRING, 
+    WorkType STRING, 
+    ScheduledDateStart TIMESTAMP, 
+    ScheduledDateEnd TIMESTAMP, 
+    ActualDateStart TIMESTAMP, 
+    ActualDateEnd TIMESTAMP, 
+    Dispatched STRING, 
+    DispatchedDate TIMESTAMP, 
+    AllocatedToUserName STRING, 
+    MandatoryResourceUserName STRING, 
+    AppointmentPending STRING, 
+    AppointmentStart TIMESTAMP, 
+    AppointmentEnd TIMESTAMP, 
+    Origin STRING, 
+    WorkOrderReference STRING, 
+    ClientReference STRING, 
+    Deleted STRING, 
+    DeletionReason STRING, 
+    DeletionNotes STRING, 
+    CatalogueReference STRING, 
+    WorldReference STRING, 
+    DueDateStart TIMESTAMP, 
+    DueDateEnd TIMESTAMP, 
+    ExtContactPreferredName STRING, 
+    ExtContactId STRING, 
+    ExtContactIdLabel STRING, 
+    ExtContactDateOfBirth TIMESTAMP, 
+    ExtContactDateOfDeath TIMESTAMP, 
+    ExtContactGender STRING, 
+    DeletedByUserName STRING, 
+    GroupReference STRING, 
+    BandingGroup STRING, 
+    Value INT, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_Jobs';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_JobsActivityLog(
+    Id INT, 
+    Reference STRING, 
+    AllocatedTo STRING, 
+    WorldReference STRING, 
+    Username STRING, 
+    Timestamp TIMESTAMP, 
+    Action STRING, 
+    ReasonCode STRING, 
+    Notes STRING, 
+    Source STRING, 
+    ScheduleTime TIMESTAMP, 
+    Constraints STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_JobsActivityLog';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_LocationTrackingUpdates(
+    UpdateKey STRING, 
+    TransactionType STRING, 
+    TransactionText STRING, 
+    TransactionTime TIMESTAMP, 
+    RequestTime TIMESTAMP, 
+    ResponseTime TIMESTAMP, 
+    RequestNotes STRING, 
+    LocationProvider STRING, 
+    LocationLatitude FLOAT, 
+    LocationLongitude FLOAT, 
+    LocationAltitude FLOAT, 
+    LocationAccuracy INT, 
+    DeviceLocationProvider STRING, 
+    DeviceLocationLatitude FLOAT, 
+    DeviceLocationLongitude FLOAT, 
+    DeviceLocationAltitude FLOAT, 
+    DeviceLocationAccuracy INT, 
+    ValidLocation STRING, 
+    UserID INT, 
+    UserName STRING, 
+    UserDeviceID STRING, 
+    UserForename STRING, 
+    UserSurname STRING, 
+    UserPhone STRING, 
+    UserMobilePhone STRING, 
+    UserWorkPhone STRING, 
+    UserEmail STRING, 
+    UserWorkEmail STRING, 
+    UserJobTitle STRING, 
+    UserAddress STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_LocationTrackingUpdates';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_ResourceAvailability(
+    Type STRING, 
+    ResourceUsername STRING, 
+    Start TIMESTAMP, 
+    End TIMESTAMP, 
+    Description STRING, 
+    Reference STRING, 
+    Reason STRING, 
+    Deleted STRING, 
+    WorldReference STRING, 
+    SourceWorldReference STRING, 
+    DeletionReason STRING, 
+    DeletionNotes STRING, 
+    DeletedByUserName STRING, 
+    Address STRING, 
+    Geox FLOAT, 
+    Geoy FLOAT, 
+    ClearOverlappingJobs STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_ResourceAvailability';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_ResourceAvailabilityLog(
+    Id INT, 
+    AvailabilityReference STRING, 
+    Start TIMESTAMP, 
+    End TIMESTAMP, 
+    DeletionReason STRING, 
+    DeletionNotes STRING, 
+    Username STRING, 
+    Timestamp TIMESTAMP, 
+    WorldReference STRING, 
+    SourceWorldReference STRING, 
+    Address STRING, 
+    Geox FLOAT, 
+    Geoy FLOAT, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_ResourceAvailabilityLog';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_ResourceRosters(
+    Reference STRING, 
+    Start TIMESTAMP, 
+    End TIMESTAMP, 
+    Offset INT, 
+    RosterKey STRING, 
+    ResourceUsername STRING, 
+    DeletedDate TIMESTAMP, 
+    WorldReference STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_ResourceRosters';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_Resources(
+    ResourceKey STRING, 
+    UserName STRING, 
+    ForeName STRING, 
+    SurName STRING, 
+    HomePhone STRING, 
+    MobilePhone STRING, 
+    WorkPhone STRING, 
+    Email STRING, 
+    JobTitle STRING, 
+    Address STRING, 
+    Geox FLOAT, 
+    Geoy FLOAT, 
+    UserKey STRING, 
+    UserId INT, 
+    TravelMode STRING, 
+    Range FLOAT, 
+    WorkInProgress INT, 
+    WeekWorkHours FLOAT, 
+    BandingGroup STRING, 
+    IndefiniteLeave STRING, 
+    PreferenceGroup STRING, 
+    MinValueThreshold INT, 
+    Efficiency INT, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_Resources';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_ResourceSkills(
+    SkillKey STRING, 
+    Code STRING, 
+    ResourceKey STRING, 
+    ExpiryDate TIMESTAMP, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_ResourceSkills';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_Rosters(
+    Reference STRING, 
+    Name STRING, 
+    Deleted STRING, 
+    RosterKey STRING, 
+    DeletedByUserName STRING, 
+    DeletedDate TIMESTAMP, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_Rosters';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_UserAttributes(
+    AttributeKey STRING, 
+    UserKey STRING, 
+    Name STRING, 
+    Value STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_UserAttributes';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_Users(
+    UserKey STRING, 
+    UserId INT, 
+    DeviceID STRING, 
+    Username STRING, 
+    Forename STRING, 
+    Surname STRING, 
+    Phone STRING, 
+    Email STRING, 
+    JobTitle STRING, 
+    HasDevice STRING, 
+    Deleted STRING, 
+    DeletedDate TIMESTAMP, 
+    DeletedBy STRING, 
+    OriginalUserName STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_Users';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_VisitAdditionalProperties(
+    PropertyKey STRING, 
+    VisitParentKey STRING, 
+    Name STRING, 
+    Value STRING, 
+    PropertyParentKey STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_VisitAdditionalProperties';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_VisitLines(
+    LineKey STRING, 
+    ParentKey STRING, 
+    LineNumber INT, 
+    Trade STRING, 
+    Type STRING, 
+    Code STRING, 
+    Description STRING, 
+    Quantity FLOAT, 
+    CompletedQuantity FLOAT, 
+    SMV FLOAT, 
+    Price FLOAT, 
+    Cash FLOAT, 
+    Complete STRING, 
+    Notes STRING, 
+    Location STRING, 
+    AddedAtCompletion STRING, 
+    Recalled STRING, 
+    FormReference STRING, 
+    FormVersion INT, 
+    FormResultKey STRING, 
+    Status STRING, 
+    VisitsActivityLogKey STRING, 
+    LastUpdatedDateTime TIMESTAMP, 
+    Title STRING, 
+    ParentLineKey STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_VisitLines';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_Visits(
+    VisitKey STRING, 
+    IdentityKey STRING, 
+    IdentityWorkType STRING, 
+    IdentityWorkTypeDescription STRING, 
+    IdentityUserID INT, 
+    IdentityUserName STRING, 
+    IdentityUserForename STRING, 
+    IdentityUserSurname STRING, 
+    IdentityUserPhone STRING, 
+    IdentityUserMobilePhone STRING, 
+    IdentityUserWorkPhone STRING, 
+    IdentityUserEmail STRING, 
+    IdentityUserWorkEmail STRING, 
+    IdentityUserJobTitle STRING, 
+    IdentityUserAddress STRING, 
+    IdentityUserDeviceID STRING, 
+    IdentityCompany STRING, 
+    IdentityReference STRING, 
+    ClientReference STRING, 
+    Description STRING, 
+    PropertyKey STRING, 
+    PropertyType STRING, 
+    PropertyReference STRING, 
+    PropertyParentReference STRING, 
+    PropertyName STRING, 
+    PropertyTitle STRING, 
+    PropertyAddressName STRING, 
+    PropertyAddressLine1 STRING, 
+    PropertyAddressLine2 STRING, 
+    PropertyAddressLine3 STRING, 
+    PropertyAddressLine4 STRING, 
+    PropertyAddressLine5 STRING, 
+    PropertyAddressHouseNo STRING, 
+    PropertyAddressPostCode STRING, 
+    PropertyAddressGeoX FLOAT, 
+    PropertyAddressGeoY FLOAT, 
+    PropertyAddressURL STRING, 
+    PropertyPhone STRING, 
+    PropertyWorkPhone STRING, 
+    PropertyMobilePhone STRING, 
+    PropertyEmail STRING, 
+    PropertyURL STRING, 
+    SupervisorKey STRING, 
+    SupervisorType STRING, 
+    SupervisorReference STRING, 
+    SupervisorParentReference STRING, 
+    SupervisorName STRING, 
+    SupervisorTitle STRING, 
+    SupervisorAddressName STRING, 
+    SupervisorAddressLine1 STRING, 
+    SupervisorAddressLine2 STRING, 
+    SupervisorAddressLine3 STRING, 
+    SupervisorAddressLine4 STRING, 
+    SupervisorAddressLine5 STRING, 
+    SupervisorAddressHouseNo STRING, 
+    SupervisorAddressPostCode STRING, 
+    SupervisorAddressGeoX FLOAT, 
+    SupervisorAddressGeoY FLOAT, 
+    SupervisorAddressURL STRING, 
+    SupervisorPhone STRING, 
+    SupervisorWorkPhone STRING, 
+    SupervisorMobilePhone STRING, 
+    SupervisorEmail STRING, 
+    SupervisorURL STRING, 
+    Status STRING, 
+    StatusDescription STRING, 
+    StatusChangeDate TIMESTAMP, 
+    CreatedDate TIMESTAMP, 
+    Retrieved STRING, 
+    RetrievedDate TIMESTAMP, 
+    PrintedDate TIMESTAMP, 
+    ReceivedDate TIMESTAMP, 
+    ResponseDate TIMESTAMP, 
+    RequiredDate TIMESTAMP, 
+    Complete STRING, 
+    CompletedDate TIMESTAMP, 
+    AppointmentDate TIMESTAMP, 
+    AppointmentSlot STRING, 
+    AppointmentScheduleStartDate TIMESTAMP, 
+    AppointmentScheduleEndDate TIMESTAMP, 
+    AppointmentKept STRING, 
+    AppointmentReasonCode STRING, 
+    AppointmentReasonCodeDescription STRING, 
+    AppointmentNarrative STRING, 
+    ScheduleStartDate TIMESTAMP, 
+    ScheduleEndDate TIMESTAMP, 
+    Priority STRING, 
+    Origin STRING, 
+    SpecialInstructions STRING, 
+    CatalogueReference STRING, 
+    CatalogueReferenceDescription STRING, 
+    RecallStatus STRING, 
+    HasPendingTasks STRING, 
+    ExpectedDuration INT, 
+    Action STRING, 
+    ClientFacingTimeMinutes INT, 
+    RequiredStartDateTime TIMESTAMP, 
+    ActualStartDateTime TIMESTAMP, 
+    ContactPreferredName STRING, 
+    ContactID STRING, 
+    ContactIdLabel STRING, 
+    ContactDateOfBirth TIMESTAMP, 
+    ContactDateOfDeath TIMESTAMP, 
+    ContactGender STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_Visits';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_VisitsActivityLog(
+    LogKey STRING, 
+    VisitKey STRING, 
+    FromStatus STRING, 
+    FromStatusDescription STRING, 
+    ToStatus STRING, 
+    ToStatusDescription STRING, 
+    ReasonCode STRING, 
+    ReasonCodeDescription STRING, 
+    Notes STRING, 
+    ChangeDate TIMESTAMP, 
+    Process STRING, 
+    ProcessDescription STRING, 
+    Recall STRING, 
+    LocationTrackingUpdateKey STRING, 
+    ActivityTypeDetail STRING, 
+    Origin STRING, 
+    ProcessedDate TIMESTAMP, 
+    Action STRING, 
+    LastUpdatedUtc TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP 
+) 
+USING DELTA 
+LOCATION '{bronze_location}/{table_prefix}_dbo_VisitsActivityLog'

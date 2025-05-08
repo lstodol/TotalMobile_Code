@@ -1,0 +1,132 @@
+[
+    {
+      "SchemaName": "dbo",
+      "TableName": "RM_RESOURCE",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "RM_RESOURCE_ATTRIBUTE",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "RM_RESOURCE_SKILL",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "RM_RESOURCE_WORKING_PATTERN",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "RM_SKILL",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "RM_WORK_ITEM",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "RM_WORK_ITEM_ADDITIONAL_PROPERTIES",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "RM_WORK_ITEM_ATTRIBUTE",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "RM_WORK_ITEM_RELATION",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "RM_WORK_ITEM_TASK",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "RM_WORK_ITEM_VISIT_STATE",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "RM_WORKING_PATTERN",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "RM_WORLD",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    }
+  ]

@@ -1,0 +1,18 @@
+CREATE TABLE IF NOT EXISTS {table_prefix}_bulletin (
+    unique_key STRING NOT NULL,
+    category STRING,
+    subject STRING,
+    status INT,
+    user_key STRING,
+    user_name STRING,
+    message_time TIMESTAMP,
+    load_date TIMESTAMP
+)
+USING DELTA
+CLUSTER BY (unique_key)
+LOCATION '{silver_location}/{table_prefix}_bulletin'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true',
+    'delta.autoOptimize.autoCompact'='true', 
+    'delta.autoOptimize.optimizeWrite'='true'
+);

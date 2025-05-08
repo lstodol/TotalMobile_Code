@@ -1,0 +1,11 @@
+{
+	"name": "ls_analytics_kv",
+	"properties": {
+		"annotations": [],
+		"type": "AzureKeyVault",
+		"typeProperties": {
+			"baseUrl": "https://dev-analytics-u-uks-kv.vault.azure.net/"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
+}

@@ -1,0 +1,562 @@
+{
+	"name": "ingest_raw",
+	"properties": {
+		"activities": [
+			{
+				"name": "Read Product Config",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:15:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_product_config_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"ProductName": {
+								"value": "@pipeline().parameters.ProductName",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Ingest Each Table",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set Table List",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('TableList')",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Conditional Ingestion",
+							"type": "Switch",
+							"dependsOn": [],
+							"userProperties": [],
+							"typeProperties": {
+								"on": {
+									"value": "@if(\n    equals(toLower(item().TableType), 'reference'),\n    'Reference',\n    concat(item().TableType, '-', item().LoadType)\n)",
+									"type": "Expression"
+								},
+								"cases": [
+									{
+										"value": "SystemVersioned-Full",
+										"activities": [
+											{
+												"name": "ingest_systemversioned_tables_full",
+												"type": "ExecutePipeline",
+												"dependsOn": [],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "ingest_systemversioned_tables_full",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": true,
+													"parameters": {
+														"TenantName": {
+															"value": "@pipeline().parameters.TenantName",
+															"type": "Expression"
+														},
+														"ProductName": {
+															"value": "@pipeline().parameters.ProductName",
+															"type": "Expression"
+														},
+														"SchemaName": {
+															"value": "@toLower(item().SchemaName)",
+															"type": "Expression"
+														},
+														"TableName": {
+															"value": "@toLower(item().TableName)",
+															"type": "Expression"
+														},
+														"IncrementalColumn": {
+															"value": "@item().IncrementalColumn",
+															"type": "Expression"
+														},
+														"HistoryTableSchemaName": {
+															"value": "@toLower(item().HistoryTableSchemaName)",
+															"type": "Expression"
+														},
+														"HistoryTableName": {
+															"value": "@toLower(item().HistoryTableName)",
+															"type": "Expression"
+														},
+														"HistoryIncrementalColumn": {
+															"value": "@item().HistoryIncrementalColumn",
+															"type": "Expression"
+														},
+														"PrimaryKeyColumn": {
+															"value": "@toLower(item().PrimaryKeyColumn)",
+															"type": "Expression"
+														},
+														"ConnectionString": {
+															"value": "@pipeline().parameters.ConnectionString",
+															"type": "Expression"
+														},
+														"LoadDate": {
+															"value": "@formatDateTime(utcNow(), 'yyyyMMddHHmmss')",
+															"type": "Expression"
+														},
+														"ADFRunId": {
+															"value": "@pipeline().parameters.ADFRunId",
+															"type": "Expression"
+														}
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "SystemVersioned-Incremental",
+										"activities": [
+											{
+												"name": "Ingest System Versioned Incremental",
+												"type": "ExecutePipeline",
+												"dependsOn": [],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "ingest_systemversioned_tables_incremental",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": true,
+													"parameters": {
+														"TenantName": {
+															"value": "@pipeline().parameters.TenantName",
+															"type": "Expression"
+														},
+														"ProductName": {
+															"value": "@pipeline().parameters.ProductName",
+															"type": "Expression"
+														},
+														"SchemaName": {
+															"value": "@toLower(item().SchemaName)",
+															"type": "Expression"
+														},
+														"TableName": {
+															"value": "@toLower(item().TableName)",
+															"type": "Expression"
+														},
+														"IncrementalColumn": {
+															"value": "@item().IncrementalColumn",
+															"type": "Expression"
+														},
+														"HistoryTableSchemaName": {
+															"value": "@toLower(item().HistoryTableSchemaName)",
+															"type": "Expression"
+														},
+														"HistoryTableName": {
+															"value": "@toLower(item().HistoryTableName)",
+															"type": "Expression"
+														},
+														"HistoryIncrementalColumn": {
+															"value": "@item().HistoryIncrementalColumn",
+															"type": "Expression"
+														},
+														"PrimaryKeyColumn": {
+															"value": "@toLower(item().PrimaryKeyColumn)",
+															"type": "Expression"
+														},
+														"ConnectionString": {
+															"value": "@pipeline().parameters.ConnectionString",
+															"type": "Expression"
+														},
+														"LoadDate": {
+															"value": "@formatDateTime(utcNow(), 'yyyyMMddHHmmss')",
+															"type": "Expression"
+														},
+														"ADFRunId": {
+															"value": "@pipeline().parameters.ADFRunId",
+															"type": "Expression"
+														}
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "Reference",
+										"activities": [
+											{
+												"name": "Check If Reference File Exists",
+												"type": "GetMetadata",
+												"dependsOn": [],
+												"policy": {
+													"timeout": "0.00:15:00",
+													"retry": 0,
+													"retryIntervalInSeconds": 30,
+													"secureOutput": false,
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"dataset": {
+														"referenceName": "ds_reference_table_check_dls",
+														"type": "DatasetReference",
+														"parameters": {
+															"TenantName": {
+																"value": "@pipeline().parameters.TenantName",
+																"type": "Expression"
+															},
+															"ProductName": {
+																"value": "@pipeline().parameters.ProductName",
+																"type": "Expression"
+															},
+															"SchemaName": {
+																"value": "@toLower(item().SchemaName)",
+																"type": "Expression"
+															},
+															"TableName": {
+																"value": "@toLower(item().TableName)",
+																"type": "Expression"
+															}
+														}
+													},
+													"fieldList": [
+														"exists"
+													],
+													"storeSettings": {
+														"type": "AzureBlobFSReadSettings",
+														"recursive": true,
+														"enablePartitionDiscovery": false
+													},
+													"formatSettings": {
+														"type": "BinaryReadSettings"
+													}
+												}
+											},
+											{
+												"name": "Ingest Each File",
+												"type": "ExecutePipeline",
+												"dependsOn": [
+													{
+														"activity": "Check If Reference File Exists",
+														"dependencyConditions": [
+															"Succeeded"
+														]
+													}
+												],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "ingest_reference_tables",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": true,
+													"parameters": {
+														"TenantName": {
+															"value": "@pipeline().parameters.TenantName",
+															"type": "Expression"
+														},
+														"ProductName": {
+															"value": "@pipeline().parameters.ProductName",
+															"type": "Expression"
+														},
+														"SchemaName": {
+															"value": "@toLower(item().SchemaName)",
+															"type": "Expression"
+														},
+														"TableName": {
+															"value": "@toLower(item().TableName)",
+															"type": "Expression"
+														},
+														"FileExists": {
+															"value": "@activity('Check If Reference File Exists').output.exists",
+															"type": "Expression"
+														},
+														"ConnectionString": {
+															"value": "@pipeline().parameters.ConnectionString",
+															"type": "Expression"
+														},
+														"ADFRunId": {
+															"value": "@pipeline().parameters.ADFRunId",
+															"type": "Expression"
+														}
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "HotReference-Full",
+										"activities": [
+											{
+												"name": "ingest_hot_reference_tables",
+												"type": "ExecutePipeline",
+												"dependsOn": [],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "ingest_hot_reference_tables",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": true,
+													"parameters": {
+														"TenantName": {
+															"value": "@pipeline().parameters.TenantName",
+															"type": "Expression"
+														},
+														"ProductName": {
+															"value": "@pipeline().parameters.ProductName",
+															"type": "Expression"
+														},
+														"TableName": {
+															"value": "@toLower(item().TableName)",
+															"type": "Expression"
+														},
+														"SchemaName": {
+															"value": "@toLower(item().SchemaName)",
+															"type": "Expression"
+														},
+														"ConnectionString": {
+															"value": "@pipeline().parameters.ConnectionString",
+															"type": "Expression"
+														},
+														"ADFRunId": {
+															"value": "@pipeline().parameters.ADFRunId",
+															"type": "Expression"
+														}
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "UpdateTimestamp-Incremental",
+										"activities": [
+											{
+												"name": "ingest_updatetimestamp_tables_incremental",
+												"type": "ExecutePipeline",
+												"dependsOn": [],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "ingest_updatetimestamp_tables_incremental",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": true,
+													"parameters": {
+														"TenantName": {
+															"value": "@pipeline().parameters.TenantName",
+															"type": "Expression"
+														},
+														"ProductName": {
+															"value": "@pipeline().parameters.ProductName",
+															"type": "Expression"
+														},
+														"SchemaName": {
+															"value": "@toLower(item().SchemaName)",
+															"type": "Expression"
+														},
+														"TableName": {
+															"value": "@toLower(item().TableName)",
+															"type": "Expression"
+														},
+														"IncrementalColumn": {
+															"value": "@item().IncrementalColumn",
+															"type": "Expression"
+														},
+														"PrimaryKeyColumn": {
+															"value": "@toLower(item().PrimaryKeyColumn)",
+															"type": "Expression"
+														},
+														"ConnectionString": {
+															"value": "@pipeline().parameters.ConnectionString",
+															"type": "Expression"
+														},
+														"LoadDate": {
+															"value": "@formatDateTime(utcNow(), 'yyyyMMddHHmmss')",
+															"type": "Expression"
+														},
+														"ADFRunId": {
+															"value": "@pipeline().parameters.ADFRunId",
+															"type": "Expression"
+														}
+													}
+												}
+											}
+										]
+									},
+									{
+										"value": "ChangeTrackingVersion-Incremental",
+										"activities": [
+											{
+												"name": "ingest_changetrackingversion_tables_incremental",
+												"type": "ExecutePipeline",
+												"dependsOn": [],
+												"policy": {
+													"secureInput": false
+												},
+												"userProperties": [],
+												"typeProperties": {
+													"pipeline": {
+														"referenceName": "ingest_changetrackingversion_tables_incremental",
+														"type": "PipelineReference"
+													},
+													"waitOnCompletion": true,
+													"parameters": {
+														"TenantName": {
+															"value": "@pipeline().parameters.TenantName",
+															"type": "Expression"
+														},
+														"ProductName": {
+															"value": "@pipeline().parameters.ProductName",
+															"type": "Expression"
+														},
+														"SchemaName": {
+															"value": "@toLower(item().SchemaName)",
+															"type": "Expression"
+														},
+														"TableName": {
+															"value": "@toLower(item().TableName)",
+															"type": "Expression"
+														},
+														"IncrementalColumn": {
+															"value": "@item().IncrementalColumn",
+															"type": "Expression"
+														},
+														"PrimaryKeyColumn": {
+															"value": "@toLower(item().PrimaryKeyColumn)",
+															"type": "Expression"
+														},
+														"ConnectionString": {
+															"value": "@pipeline().parameters.ConnectionString",
+															"type": "Expression"
+														},
+														"LoadDate": {
+															"value": "@formatDateTime(utcNow(), 'yyyyMMddHHmmss')",
+															"type": "Expression"
+														},
+														"ADFRunId": {
+															"value": "@pipeline().parameters.ADFRunId",
+															"type": "Expression"
+														},
+														"PrimaryConnectionString": {
+															"value": "@pipeline().parameters.PrimaryConnectionString",
+															"type": "Expression"
+														}
+													}
+												}
+											}
+										]
+									}
+								]
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Set Table List",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Read Product Config",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "TableList",
+					"value": {
+						"value": "@activity('Read Product Config').output.value",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"ConnectionString": {
+				"type": "string"
+			},
+			"TenantName": {
+				"type": "string"
+			},
+			"ProductName": {
+				"type": "string"
+			},
+			"ADFRunId": {
+				"type": "string"
+			},
+			"PrimaryConnectionString": {
+				"type": "string",
+				"defaultValue": "None"
+			}
+		},
+		"variables": {
+			"TableList": {
+				"type": "Array"
+			},
+			"ConnectionList": {
+				"type": "Array"
+			},
+			"test": {
+				"type": "String"
+			},
+			"DataExistsOrNot": {
+				"type": "String"
+			},
+			"HISTDataExistsOrNot": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "others"
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-03-11T10:48:24Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

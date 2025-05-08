@@ -1,0 +1,113 @@
+[	
+	{
+		"TenantName": "totalmobile",
+		"Domain": "insight",
+		"IsActive": true,
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"marcel.fevrier@totalmobile.co.uk"
+			],
+			"JobCronSchedule": null,
+			"JobDurationThreshold": 300,
+			"JobTimeoutThreshold": 3600,
+			"ClusterName": "main_runner_hot"
+		}
+	},
+	{
+		"TenantName": "productteam",
+		"Domain": "insight",
+		"IsActive": true,
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"marcel.fevrier@totalmobile.co.uk"
+			],
+			"JobCronSchedule": null,
+			"JobDurationThreshold": 300,
+			"JobTimeoutThreshold": 3600,
+			"ClusterName": "main_runner_hot"
+		}
+	},
+	{
+		"TenantName": "totalmobile",
+		"Domain": "insight",
+		"IsActive": true,
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"marcel.fevrier@totalmobile.co.uk"
+			],
+			"JobCronSchedule": null,
+			"JobDurationThreshold": 300,
+			"JobTimeoutThreshold": 3600,
+			"ClusterName": "main_runner_hot"
+		},
+		"DataHorizonDays": 90,
+		"TruncateAgeDays": 1825
+	},
+	{
+		"TenantName": "devtest2",
+		"Domain": "care",
+		"IsActive": true,
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"piotr.kwiatkowski@totalmobile.co.uk",
+				"narotam.aggarwal@totalmobile.co.uk"
+			],
+			"JobCronSchedule": null,
+			"JobDurationThreshold": 300,
+			"JobTimeoutThreshold": 3600,
+			"ClusterName": "pk_main_runner_hot"
+		}
+	},
+	{
+		"TenantName": "devtest3",
+		"Domain": "care",
+		"IsActive": true,
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"piotr.kwiatkowski@totalmobile.co.uk",
+				"narotam.aggarwal@totalmobile.co.uk"
+			],
+			"JobCronSchedule": null,
+			"JobDurationThreshold": 300,
+			"JobTimeoutThreshold": 3600,
+			"ClusterName": "pk_main_runner_hot"
+		}
+	},,
+	{
+		"TenantName": "devtest3",
+		"Domain": "care",
+		"IsActive": true,
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"piotr.kwiatkowski@totalmobile.co.uk",
+				"narotam.aggarwal@totalmobile.co.uk"
+			],
+			"JobCronSchedule": null,
+			"JobDurationThreshold": 300,
+			"JobTimeoutThreshold": 3600,
+			"ClusterName": "pk_main_runner_hot"
+		}
+	},
+	{
+		"TenantName": "devrenfrewshire",
+		"Domain": "care",
+		"IsActive": true,
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"piotr.kwiatkowski@totalmobile.co.uk",
+				"narotam.aggarwal@totalmobile.co.uk"
+			],
+			"JobCronSchedule": null,
+			"JobDurationThreshold": 300,
+			"JobTimeoutThreshold": 3600,
+			"ClusterName": "pk_main_runner_hot"
+		}
+	}
+]

@@ -1,0 +1,51 @@
+{
+	"name": "ds_data_sharing_renfrewshire_dest",
+	"properties": {
+		"description": "Connection to your data source store. ",
+		"linkedServiceName": {
+			"referenceName": "ls_data_sharing_renfrewshire_target_dls",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"TenantStorageAccount": {
+					"value": "@dataset().TenantStorageAccount",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"TenantName": {
+				"type": "string"
+			},
+			"ProductName": {
+				"type": "string"
+			},
+			"Layer": {
+				"type": "string"
+			},
+			"TenantStorageAccount": {
+				"type": "string"
+			},
+			"FolderName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "data_sharing"
+		},
+		"annotations": [],
+		"type": "Binary",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@concat(\n    'lakehouse',\n    '/',\n    dataset().Layer,\n    '/',\n    dataset().FolderName\n)",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().TenantName",
+					"type": "Expression"
+				}
+			}
+		}
+	}
+}

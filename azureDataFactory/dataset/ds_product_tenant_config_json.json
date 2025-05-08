@@ -1,0 +1,47 @@
+{
+	"name": "ds_product_tenant_config_json",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_analytics_dls",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"tenant_product_file_name": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "config"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@dataset().tenant_product_file_name",
+					"type": "Expression"
+				},
+				"folderPath": "tenant_config",
+				"fileSystem": "config"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"TenantName": {
+					"type": "string"
+				},
+				"ProductName": {
+					"type": "string"
+				},
+				"KeyVaultSourceDBConnString": {
+					"type": "string"
+				},
+				"IsActive": {
+					"type": "boolean"
+				}
+			}
+		}
+	}
+}

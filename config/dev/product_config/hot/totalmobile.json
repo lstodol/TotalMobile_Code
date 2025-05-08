@@ -1,0 +1,7 @@
+[
+    {
+        "TableName": "bulletin",
+        "DataLayer": "bronze",
+        "LoadType": "stream"
+    }
+]

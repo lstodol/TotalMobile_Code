@@ -1,0 +1,11 @@
+{
+	"NotificationDestinations": [],
+	"NotificationRecipients": [
+		"marcel.fevrier@totalmobile.co.uk",
+		"lukasz.stodolka@totalmobile.co.uk"
+	],
+	"JobCronSchedule": "57 0/5 * * * ?",
+	"JobDurationThreshold": 300,
+	"JobTimeoutThreshold": 3600,
+	"ClusterName": "main_runner_hot"
+}

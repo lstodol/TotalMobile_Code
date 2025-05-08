@@ -1,0 +1,43 @@
+{
+	"name": "ds_datamart_table_sql_src",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_sqldb",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"ConnectionString": {
+					"value": "@dataset().ConnectionString",
+					"type": "Expression"
+				}
+			}
+		},
+		"parameters": {
+			"TableName": {
+				"type": "string"
+			},
+			"TableSchemaName": {
+				"type": "string"
+			},
+			"ConnectionString": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "sql"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": {
+				"value": "@dataset().TableSchemaName",
+				"type": "Expression"
+			},
+			"table": {
+				"value": "@dataset().TableName",
+				"type": "Expression"
+			}
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

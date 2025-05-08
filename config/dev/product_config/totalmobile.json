@@ -1,0 +1,112 @@
+[
+    {
+      "SchemaName": "auth",
+      "TableName": "EventLog",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "JM_JOB_HEADER",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "TM_ACTIVATION_REQUEST_HIST",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "TM_DEVICE",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "TM_DEVICE_APPLICATION_VERSION",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "TM_INBOX",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "TM_MEMBERSHIP_USERS",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "TM_USER",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "TM_USER_ATTRIBUTE",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "TM_USER_DETAIL",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    },
+      {
+      "SchemaName": "dbo",
+      "TableName": "TM_USER_DEVICE",
+      "HistoryTableName": null,
+      "PrimaryKeyColumn": null,
+      "LoadType": "Full",
+      "TableType": "HotReference",
+      "IncrementalColumn": null,
+      "HistoryIncrementalColumn": null
+    }
+  ]

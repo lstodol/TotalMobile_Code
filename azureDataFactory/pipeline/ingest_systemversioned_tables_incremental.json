@@ -1,0 +1,939 @@
+{
+	"name": "ingest_systemversioned_tables_incremental",
+	"properties": {
+		"activities": [
+			{
+				"name": "LIVE ValidFrom Source",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:15:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "\nSELECT TOP 1 \n    @{pipeline().parameters.IncrementalColumn} AS NewCheckpoint\nFROM \n    (\n        SELECT  @{pipeline().parameters.IncrementalColumn}\n        FROM [@{pipeline().parameters.SchemaName}].[@{pipeline().parameters.TableName}]\n        UNION ALL\n        /** In case of deleted record union all with history */\n        SELECT  @{pipeline().parameters.HistoryIncrementalColumn} AS @{pipeline().parameters.IncrementalColumn}\n        FROM [@{pipeline().parameters.HistoryTableSchemaName}].[@{pipeline().parameters.HistoryTableName}] \n    ) AS live_and_history_records\nORDER BY \n    @{pipeline().parameters.IncrementalColumn} DESC\n",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_reference_table_sql_src",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": {
+								"value": "@pipeline().parameters.TableName",
+								"type": "Expression"
+							},
+							"TableSchemaName": {
+								"value": "@pipeline().parameters.SchemaName",
+								"type": "Expression"
+							},
+							"ConnectionString": {
+								"value": "@pipeline().parameters.ConnectionString",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "Set LIVE ValidFrom Source",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "LIVE ValidFrom Source",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "NewCheckpoint",
+					"value": {
+						"value": "@if(\n    contains(\n        activity('LIVE ValidFrom Source').output, 'firstRow'\n        ),\n    activity('LIVE ValidFrom Source').output.firstRow.NewCheckpoint,\n    '1900-01-01T00:00:00Z'\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "HIST ValidFrom Source",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:15:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "\nSELECT TOP 1 \n    @{pipeline().parameters.IncrementalColumn}\nFROM \n    [@{pipeline().parameters.HistoryTableSchemaName}].[@{pipeline().parameters.HistoryTableName}]\nORDER BY \n    @{pipeline().parameters.IncrementalColumn} DESC\n",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_reference_table_sql_src",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": {
+								"value": "@pipeline().parameters.HistoryTableName",
+								"type": "Expression"
+							},
+							"TableSchemaName": {
+								"value": "@pipeline().parameters.HistoryTableSchemaName",
+								"type": "Expression"
+							},
+							"ConnectionString": {
+								"value": "@pipeline().parameters.ConnectionString",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "Set HIST ValidFrom Source",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "HIST ValidFrom Source",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "TableHistValidFromSource",
+					"value": {
+						"value": "@if(\n    contains(\n        activity('HIST ValidFrom Source').output, 'firstRow'\n        ),\n    activity('HIST ValidFrom Source').output.firstRow.ValidFrom,\n    '1900-01-01T00:00:00Z'\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "LIVE ValidFrom CheckPoint",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:15:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_temporal_raw_checkpoint",
+						"type": "DatasetReference",
+						"parameters": {
+							"Tenant": {
+								"value": "@pipeline().parameters.TenantName",
+								"type": "Expression"
+							},
+							"Product": {
+								"value": "@pipeline().parameters.ProductName",
+								"type": "Expression"
+							},
+							"TableName": {
+								"value": "@pipeline().parameters.TableName",
+								"type": "Expression"
+							},
+							"SchemaName": {
+								"value": "@pipeline().parameters.SchemaName",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "Set LIVE ValidFrom CheckPoint",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "LIVE ValidFrom CheckPoint",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "CheckPoint",
+					"value": {
+						"value": "@if(\n    contains(\n        activity('LIVE ValidFrom CheckPoint').output, 'firstRow'\n        ),\n    activity('LIVE ValidFrom CheckPoint').output.firstRow.RawCheckpoint,\n    '1900-01-01T00:00:00Z'\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Switch LIVE Checkpoint Source",
+				"type": "Switch",
+				"dependsOn": [
+					{
+						"activity": "Set LIVE ValidFrom Source",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set LIVE ValidFrom CheckPoint",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@if(\n        equals(\n            variables('CheckPoint'),\n            variables('NewCheckpoint')\n        ),\n        'OldCheckpoint',\n        'NewCheckpoint'\n    )",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "NewCheckpoint",
+							"activities": [
+								{
+									"name": "Copy LIVE table data",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Set LIVE List of columns",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										},
+										{
+											"activity": "Set HIST List of columns",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.01:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "DECLARE @DynamicSQL NVARCHAR(MAX)\n\nDECLARE @join_condition NVARCHAR(MAX) = ''\nDECLARE @a_select_pk NVARCHAR(MAX) = ''\nDECLARE @a_pk_is_null NVARCHAR(MAX) = ''\nDECLARE @h_select_pk NVARCHAR(MAX) = ''\nDECLARE @PrimaryKeyColumn VARCHAR(40) = '@{pipeline().parameters.PrimaryKeyColumn}';\n\nSELECT @join_condition = @join_condition + ' AND ' +\n'h.' + TRIM(value) + ' = ' + 'a.' + TRIM(value) \nFROM STRING_SPLIT(@PrimaryKeyColumn, ',');\nSELECT @join_condition = SUBSTRING(@join_condition, 5, LEN(@join_condition))\n\nSELECT @a_pk_is_null = @a_pk_is_null + ' AND ' + 'a.' + TRIM(value) + ' IS NULL'\nFROM STRING_SPLIT(@PrimaryKeyColumn, ',');\nSELECT @a_pk_is_null = SUBSTRING(@a_pk_is_null, 5, LEN(@a_pk_is_null))\n\nSELECT @a_select_pk = @a_select_pk + ',a.' + TRIM(value) \nFROM STRING_SPLIT(@PrimaryKeyColumn, ',');\nSELECT @a_select_pk = SUBSTRING(@a_select_pk, 2, LEN(@a_select_pk))\n\nSELECT @h_select_pk = @h_select_pk + ',h.' + TRIM(value) \nFROM STRING_SPLIT(@PrimaryKeyColumn, ',');\nSELECT @h_select_pk = SUBSTRING(@h_select_pk, 2, LEN(@h_select_pk))\n\n\nSET @DynamicSQL = 'SELECT\n\t@{variables('TableLiveListOfColumns')},\n\t@{pipeline().parameters.IncrementalColumn},\n\t@{pipeline().parameters.HistoryIncrementalColumn},\n\t''I'' AS Flag,\n\t''@{pipeline().parameters.ADFRunId}'' AS ADFRunId,\n\tGETDATE() AS LoadDate\nFROM\n\t[@{pipeline().parameters.SchemaName}].[@{pipeline().parameters.TableName}]\n\tFOR SYSTEM_TIME ALL \nWHERE\n\t@{pipeline().parameters.IncrementalColumn} > ''@{variables('CheckPoint')}'' \n\tAND @{pipeline().parameters.IncrementalColumn} <= ''@{variables('NewCheckpoint')}''\n\tAND @{pipeline().parameters.HistoryIncrementalColumn} > ''9999-12-31''\n\nUNION ALL\n\nSELECT\n\t@{variables('TableHistListOfColumns')},\n\th.@{pipeline().parameters.IncrementalColumn},\n\th.@{pipeline().parameters.HistoryIncrementalColumn},\n\t''D'' AS Flag,\n\t''@{pipeline().parameters.ADFRunId}'' AS ADFRunId,\n\tGETDATE() AS LoadDate\nFROM\n(\n\tSELECT \n\t\t' + @h_select_pk + ',\n\t\tMAX(h.@{pipeline().parameters.HistoryIncrementalColumn}) AS @{pipeline().parameters.HistoryIncrementalColumn}\n\tFROM\n\t\t[@{pipeline().parameters.HistoryTableSchemaName}].[@{pipeline().parameters.HistoryTableName}] AS h \n\tLEFT OUTER JOIN\n\t\t[@{pipeline().parameters.SchemaName}].[@{pipeline().parameters.TableName}] AS a \n\t\tON ' + @join_condition + '\n\tWHERE\n\t\t' + @a_pk_is_null + '\n\tGROUP BY\n\t\t' + @h_select_pk +'\n) AS a \nINNER JOIN\n\t[@{pipeline().parameters.HistoryTableSchemaName}].[@{pipeline().parameters.HistoryTableName}] AS h \n\t\tON ' + @join_condition + ' AND h.@{pipeline().parameters.HistoryIncrementalColumn} = a.@{pipeline().parameters.HistoryIncrementalColumn}\nWHERE\n\th.@{pipeline().parameters.HistoryIncrementalColumn} > ''@{variables('CheckPoint')}'' \n\t/**PreviousCheckPoint **/\n\tAND @{pipeline().parameters.IncrementalColumn} <= ''@{variables('NewCheckpoint')}''\n\t/**NewCheckpoint **/\n'\nEXEC sp_executesql @DynamicSQL;",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"parallelCopies": 1,
+										"dataIntegrationUnits": 2,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_reference_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_temporal_live_table_dls_dest",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"SchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"LoadDate": {
+													"value": "@pipeline().parameters.LoadDate",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "LIVE List of columns",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.00:15:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "\nSELECT STUFF((\n\tSELECT\n\t\t', [' + sysC.name + ']'\n\tFROM \n\t\tsys.columns AS sysC\t\n\tINNER JOIN sys.tables AS sysT\n\t\tON sysC.object_id = sysT.object_id\n\tINNER JOIN sys.schemas AS sysS\n\t\tON sysT.schema_id = sysS.schema_id\t\t\n\tWHERE\n\t\tsysS.name = '@{pipeline().parameters.SchemaName}'\n\t\tAND sysT.name = '@{pipeline().parameters.TableName}'\n\t\tAND sysC.name NOT IN ('@{pipeline().parameters.IncrementalColumn}', '@{pipeline().parameters.HistoryIncrementalColumn}')\n\tORDER BY\n\t\tsysC.name\n\tFOR XML PATH('')\n), 1, 1, '') AS [output]\n",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "ds_reference_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										},
+										"firstRowOnly": true
+									}
+								},
+								{
+									"name": "Set LIVE List of columns",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "LIVE List of columns",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "TableLiveListOfColumns",
+										"value": {
+											"value": "@activity('LIVE List of columns').output.firstRow.output",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "HIST List of columns",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.00:15:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "\nSELECT STUFF((\n\tSELECT\n\t\t', h.[' + sysC.name + ']'\n\tFROM \n\t\tsys.columns AS sysC\t\n\tINNER JOIN sys.tables AS sysT\n\t\tON sysC.object_id = sysT.object_id\n\tINNER JOIN sys.schemas AS sysS\n\t\tON sysT.schema_id = sysS.schema_id\t\t\n\tWHERE\n\t\tsysS.name = '@{pipeline().parameters.SchemaName}'\n\t\tAND sysT.name = '@{pipeline().parameters.TableName}'\n\t\tAND sysC.name NOT IN ('@{pipeline().parameters.IncrementalColumn}', '@{pipeline().parameters.HistoryIncrementalColumn}')\n\tORDER BY\n\t\tsysC.name\n\tFOR XML PATH('')\n), 1, 1, '') AS [output]\n",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "ds_reference_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										},
+										"firstRowOnly": true
+									}
+								},
+								{
+									"name": "Set HIST List of columns",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "HIST List of columns",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "TableHistListOfColumns",
+										"value": {
+											"value": "@activity('HIST List of columns').output.firstRow.output",
+											"type": "Expression"
+										}
+									}
+								},
+								{
+									"name": "Save LIVE ValidFrom CheckPoint",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Copy LIVE table data",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.01:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "SELECT\n    '@{variables('NewCheckpoint')}' AS RawCheckpoint,\n    '@{pipeline().parameters.ADFRunId}' AS ADFRunId",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"parallelCopies": 1,
+										"dataIntegrationUnits": 2,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_reference_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_temporal_raw_checkpoint",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"SchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "HIST ValidFrom CheckPoint",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:15:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_temporal_raw_checkpoint",
+						"type": "DatasetReference",
+						"parameters": {
+							"Tenant": {
+								"value": "@pipeline().parameters.TenantName",
+								"type": "Expression"
+							},
+							"Product": {
+								"value": "@pipeline().parameters.ProductName",
+								"type": "Expression"
+							},
+							"TableName": {
+								"value": "@pipeline().parameters.HistoryTableName",
+								"type": "Expression"
+							},
+							"SchemaName": {
+								"value": "@pipeline().parameters.HistoryTableSchemaName",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "Set HIST ValidFrom CheckPoint",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "HIST ValidFrom CheckPoint",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "TableHistValidFromCheckPoint",
+					"value": {
+						"value": "@if(\n    contains(\n        activity('HIST ValidFrom CheckPoint').output, 'firstRow'\n        ),\n    activity('HIST ValidFrom CheckPoint').output.firstRow.RawCheckpoint,\n    '1900-01-01T00:00:00Z'\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Switch HIST Checkpoint Source",
+				"type": "Switch",
+				"dependsOn": [
+					{
+						"activity": "Set HIST ValidFrom Source",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set HIST ValidFrom CheckPoint",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@if(\n        equals(\n            variables('TableHistValidFromSource'),\n            variables('TableHistValidFromCheckPoint')\n        ),\n    'OldCheckpont',\n    'NewCheckpoint'\n)",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "NewCheckpoint",
+							"activities": [
+								{
+									"name": "Copy HIST table data",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "SELECT\n\t*,\n\t'I' AS Flag,\n\t'@{pipeline().parameters.ADFRunId}' AS ADFRunId,\n\tGETDATE() AS LoadDate\nFROM\n\t[@{pipeline().parameters.HistoryTableSchemaName}].[@{pipeline().parameters.HistoryTableName}]\nWHERE\n\t@{pipeline().parameters.IncrementalColumn} > '@{variables('TableHistValidFromCheckPoint')}' \n\tAND @{pipeline().parameters.IncrementalColumn} <= '@{variables('TableHistValidFromSource')}'",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"parallelCopies": 1,
+										"dataIntegrationUnits": 2,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_history_reference_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"HistoryTableName": {
+													"value": "@pipeline().parameters.HistoryTableName",
+													"type": "Expression"
+												},
+												"HistoryTableSchemaName": {
+													"value": "@pipeline().parameters.HistoryTableSchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_temporal_history_table_dls_dest",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"HistoryTableName": {
+													"value": "@pipeline().parameters.HistoryTableName",
+													"type": "Expression"
+												},
+												"HistoryTableSchemaName": {
+													"value": "@pipeline().parameters.HistoryTableSchemaName",
+													"type": "Expression"
+												},
+												"LoadDate": {
+													"value": "@pipeline().parameters.LoadDate",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Save HIST ValidFrom CheckPoint",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Copy HIST table data",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.01:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "SELECT\n    '@{variables('TableHistValidFromSource')}' AS RawCheckpoint,\n    '@{pipeline().parameters.ADFRunId}' AS ADFRunId",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"parallelCopies": 1,
+										"dataIntegrationUnits": 2,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_reference_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_temporal_raw_checkpoint",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@pipeline().parameters.HistoryTableName",
+													"type": "Expression"
+												},
+												"SchemaName": {
+													"value": "@pipeline().parameters.HistoryTableSchemaName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"TenantName": {
+				"type": "string"
+			},
+			"ProductName": {
+				"type": "string"
+			},
+			"SchemaName": {
+				"type": "string"
+			},
+			"TableName": {
+				"type": "string"
+			},
+			"IncrementalColumn": {
+				"type": "string"
+			},
+			"HistoryTableSchemaName": {
+				"type": "string"
+			},
+			"HistoryTableName": {
+				"type": "string"
+			},
+			"HistoryIncrementalColumn": {
+				"type": "string"
+			},
+			"PrimaryKeyColumn": {
+				"type": "string"
+			},
+			"ConnectionString": {
+				"type": "string"
+			},
+			"LoadDate": {
+				"type": "string"
+			},
+			"ADFRunId": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"TableHistValidFromCheckPoint": {
+				"type": "String",
+				"defaultValue": "1900-01-01T00:00:00Z"
+			},
+			"TableLiveValidFromCheckPoint": {
+				"type": "String",
+				"defaultValue": "1900-01-01T00:00:00Z"
+			},
+			"TableHistValidFromSource": {
+				"type": "String"
+			},
+			"TableHistListOfColumns": {
+				"type": "String"
+			},
+			"TableLiveListOfColumns": {
+				"type": "String"
+			},
+			"NewCheckpoint": {
+				"type": "String"
+			},
+			"CheckPoint": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "others"
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-03-10T01:02:24Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

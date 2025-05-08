@@ -1,0 +1,66 @@
+[
+	{
+		"TenantName": "totalmobile",
+		"ProductName": "insight",
+		"IsActive": true,
+		"EventHubNamespace" : "dev-analytics-u-uks-evhns",
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"marcel.fevrier@totalmobile.co.uk",
+				"lukasz.stodolka@totalmobile.co.uk"
+			],
+			"ClusterName": "main_runner_hot",
+			"TasksParallelStreams": 1
+		}
+	},
+	{
+		"TenantName": "productteam",
+		"ProductName": "insight",
+		"IsActive": true,
+		"EventHubNamespace" : "dev-analytics-u-uks-evhns",
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"marcel.fevrier@totalmobile.co.uk",
+				"lukasz.stodolka@totalmobile.co.uk"
+			],
+			"ClusterName": "main_runner_hot",
+			"TasksParallelStreams": 1
+		}
+	},
+	{
+		"TenantName": "devtest2",
+		"ProductName": "totalmobile",
+		"IsActive": true,
+		"EventHubNamespace" : "dev-analytics-u-uks-evhns",
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"piotr.kwiatkowski@totalmobile.co.uk"
+			],
+			"ClusterName": "main_runner_hot",
+			"TasksParallelStreams": 1
+		}
+	},
+	{
+		"TenantName": "devrenfrewshire",
+		"ProductName": "totalmobile",
+		"IsActive": true,
+		"EventHubNamespace" : "dev-analytics-u-uks-evhns"
+	},
+	{
+		"TenantName": "devtest3",
+		"ProductName": "totalmobile",
+		"IsActive": true,
+		"EventHubNamespace" : "dev-analytics-u-uks-evhns",
+		"Jobs": {
+			"NotificationDestinations": [],
+			"NotificationRecipients": [
+				"piotr.kwiatkowski@totalmobile.co.uk"
+			],
+			"ClusterName": "pk_main_runner_hot",
+			"TasksParallelStreams": 1
+		}
+	}
+]

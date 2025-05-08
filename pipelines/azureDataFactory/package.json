@@ -1,0 +1,9 @@
+{
+    "scripts": {
+        "build": "node node_modules/@microsoft/azure-data-factory-utilities/lib/index"
+    },
+    "dependencies": {
+        "@microsoft/azure-data-factory-utilities": "^0.1.5",
+        "package.json": "^2.0.1"
+    }
+}

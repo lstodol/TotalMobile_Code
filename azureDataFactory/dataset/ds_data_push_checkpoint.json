@@ -1,0 +1,48 @@
+{
+	"name": "ds_data_push_checkpoint",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_data_sharing_renfrewshire_target_dls",
+			"type": "LinkedServiceReference",
+			"parameters": {
+				"TenantStorageAccount": "@pipeline().parameters.TenantStorageAccount"
+			}
+		},
+		"parameters": {
+			"Tenant": {
+				"type": "string"
+			},
+			"Product": {
+				"type": "string"
+			},
+			"Layer": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "dls"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(\n    dataset().Tenant, \n    '_', \n    dataset().Product, \n    '_', \n    dataset().Layer, \n    '_checkpoint', \n    '.parquet'\n)",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat(\n    'data_push_checkpoint/',\n    dataset().Product,\n    '/',\n    dataset().Layer\n)",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().Tenant",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

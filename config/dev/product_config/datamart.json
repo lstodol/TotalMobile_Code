@@ -1,0 +1,222 @@
+[
+  {  
+    "SchemaName": "dbo",      
+    "TableName": "Jobs",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "JobKey",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {
+    "SchemaName": "dbo",
+    "TableName": "JobRelations",
+    "HistoryTableName": null,
+    "HistoryTableSchemaName": null,
+    "PrimaryKeyColumn": "RelationKey",
+    "LoadType": "Incremental",
+    "TableType": "ChangeTrackingVersion",
+    "IncrementalColumn": "LastUpdatedUtc",
+    "HistoryIncrementalColumn": null
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "JobsActivityLog",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "Id",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "Users",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "UserKey",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {
+    "SchemaName": "dbo",
+    "TableName": "JobAdditionalProperties",
+    "HistoryTableName": null,
+    "HistoryTableSchemaName": null,
+    "PrimaryKeyColumn": "AdditionalPropertiesKey",
+    "LoadType": "Incremental",
+    "TableType": "ChangeTrackingVersion",
+    "IncrementalColumn": "LastUpdatedUtc",
+    "HistoryIncrementalColumn": null
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "Visits",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "VisitKey",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "VisitsActivityLog",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "LogKey",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {
+    "SchemaName": "dbo",
+    "TableName": "VisitAdditionalProperties",
+    "HistoryTableName": null,
+    "HistoryTableSchemaName": null,
+    "PrimaryKeyColumn": "PropertyKey",
+    "LoadType": "Incremental",
+    "TableType": "ChangeTrackingVersion",
+    "IncrementalColumn": "LastUpdatedUtc",
+    "HistoryIncrementalColumn": null
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "FormResults",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "FormResultKey",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "FormResultDetails",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "DetailKey",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "FormResultAnswers",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,     
+    "PrimaryKeyColumn": "AnswerKey",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null
+  }, 
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "VisitLines",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "LineKey",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "Resources",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "ResourceKey",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "ResourceRosters",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "Reference",      
+    "LoadType": "Incremental",      
+    "TableType": "ChangeTrackingVersion",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "Rosters",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "RosterKey",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  }, 
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "UserAttributes",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "AttributeKey",      
+    "LoadType": "Incremental",      
+    "TableType": "ChangeTrackingVersion",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "ResourceSkills",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "SkillKey",      
+    "LoadType": "Incremental",      
+    "TableType": "ChangeTrackingVersion",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "LocationTrackingUpdates",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "UpdateKey",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "ResourceAvailabilityLog",     
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "Id",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  },
+  {      
+    "SchemaName": "dbo",      
+    "TableName": "ResourceAvailability",      
+    "HistoryTableName": null,      
+    "HistoryTableSchemaName": null,      
+    "PrimaryKeyColumn": "Reference",      
+    "LoadType": "Incremental",      
+    "TableType": "UpdateTimestamp",      
+    "IncrementalColumn": "LastUpdatedUtc",      
+    "HistoryIncrementalColumn": null    
+  }
+]

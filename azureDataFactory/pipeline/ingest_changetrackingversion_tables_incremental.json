@@ -1,0 +1,1162 @@
+{
+	"name": "ingest_changetrackingversion_tables_incremental",
+	"properties": {
+		"activities": [
+			{
+				"name": "Get Version from Source",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:15:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "SELECT \n\tCOALESCE(MAX(SYS_CHANGE_VERSION), 0) as NewVersion\nFROM \n\tCHANGETABLE(CHANGES [@{pipeline().parameters.SchemaName}].[@{pipeline().parameters.TableName}], 0) as CT",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_datamart_table_sql_src",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": {
+								"value": "@pipeline().parameters.TableName",
+								"type": "Expression"
+							},
+							"TableSchemaName": {
+								"value": "@pipeline().parameters.SchemaName",
+								"type": "Expression"
+							},
+							"ConnectionString": {
+								"value": "@pipeline().parameters.PrimaryConnectionString",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "Set Source Version as NewVersion",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Get Version from Source",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "NewVersion",
+					"value": {
+						"value": "@if(\n    contains(\n        activity('Get Version from Source').output, 'firstRow'\n        ),\n    activity('Get Version from Source').output.firstRow.NewVersion,\n    0\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Get Version from Checkpoint",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:15:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_datamart_raw_checkpoint_version",
+						"type": "DatasetReference",
+						"parameters": {
+							"Tenant": {
+								"value": "@pipeline().parameters.TenantName",
+								"type": "Expression"
+							},
+							"Product": {
+								"value": "@pipeline().parameters.ProductName",
+								"type": "Expression"
+							},
+							"TableName": {
+								"value": "@pipeline().parameters.TableName",
+								"type": "Expression"
+							},
+							"SchemaName": {
+								"value": "@pipeline().parameters.SchemaName",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "Set Existing Version as Version",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Get Version from Checkpoint",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "Version",
+					"value": {
+						"value": "@if(\n    contains(\n        activity('Get Version from Checkpoint').output, 'firstRow'\n        ),\n    int(activity('Get Version from Checkpoint').output.firstRow.RawVersionCheckpoint),\n    0\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Switch Delete Change Tracking",
+				"type": "Switch",
+				"dependsOn": [
+					{
+						"activity": "Set Source Version as NewVersion",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set Existing Version as Version",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@if(\n\tequals(\n\t\t\tvariables('NewVersion'),\n\t\t\tvariables('Version')\n\t),\n    'OldVersion',\n\t'NewVersion' \n)",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "NewVersion",
+							"activities": [
+								{
+									"name": "Copy change tracking table data",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Set List of columns Deleted",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.01:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "DECLARE @DynamicSQL NVARCHAR(MAX)\n\nSET @DynamicSQL = '\nSELECT \n\t@{variables('TableListOfColumnsDeleted')},\n\tTC.[commit_time] AS @{pipeline().parameters.IncrementalColumn},\n\t''D'' AS Flag,\n\t''@{pipeline().parameters.ADFRunId}'' AS ADFRunId,\n\tGETDATE() AS LoadDate\nFROM\n\tCHANGETABLE(CHANGES [@{pipeline().parameters.SchemaName}].[@{pipeline().parameters.TableName}], @{variables('Version')}) CT\nINNER JOIN sys.dm_tran_commit_table TC \n\t\tON CT.sys_change_version = TC.commit_ts\nWHERE\n\tSYS_CHANGE_VERSION <= @{variables('NewVersion')}\n\tAND SYS_CHANGE_OPERATION = ''D''\n'\nEXEC sp_executesql @DynamicSQL;\n",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"parallelCopies": 1,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_datamart_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.PrimaryConnectionString",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_datamart_table_merge_dls_dest",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"SchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"FileType": "change_tracking"
+											}
+										}
+									]
+								},
+								{
+									"name": "Get List of columns Deleted",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.00:15:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "SELECT STUFF((\n\tSELECT\n\t\tCASE WHEN sysC.name = '@{pipeline().parameters.PrimaryKeyColumn}'\n\t\t\tTHEN ', [' + sysC.name + ']'\n\t\t\tWHEN sysC.name = '@{pipeline().parameters.IncrementalColumn}'\n\t\t\tTHEN ''\n\t\t\tELSE CASE WHEN C.DATA_TYPE = 'int' \n\t\t\t\t\t\tTHEN ', -999 as [' + sysC.name + ']'\n\t\t\t\t\t  WHEN C.DATA_TYPE = 'uniqueidentifier' \n\t\t\t\t\t\tTHEN ', NEWID() as [' + sysC.name + ']'\n\t\t\t\t\t  WHEN C.DATA_TYPE IN('datetime', 'datetime2') \n\t\t\t\t\t    THEN ', GETDATE() as [' + sysC.name + ']' \n\t\t\t\t\t  ELSE ', ''''DEFAULT'''' as [' + sysC.name + ']' \n\t\t\t\tEND\n\t\tEND\n\tFROM \n\t\tsys.columns AS sysC\t\n\tINNER JOIN sys.tables AS sysT\n\t\tON sysC.object_id = sysT.object_id\n\tINNER JOIN sys.schemas AS sysS\n\t\tON sysT.schema_id = sysS.schema_id\n\tINNER JOIN INFORMATION_SCHEMA.COLUMNS C\n\t\tON C.TABLE_SCHEMA = '@{pipeline().parameters.SchemaName}'\n\t\tAND C.TABLE_NAME = '@{pipeline().parameters.TableName}'\n\t\tAND C.COLUMN_NAME = sysC.name\t\t\n\tWHERE\n\t\tsysS.name = '@{pipeline().parameters.SchemaName}'\n\t\tAND sysT.name = '@{pipeline().parameters.TableName}'\n\tORDER BY\n\t\tsysC.name\n\tFOR XML PATH('')\n), 1, 1, '') AS [output]",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "ds_datamart_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										},
+										"firstRowOnly": true
+									}
+								},
+								{
+									"name": "Set List of columns Deleted",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Get List of columns Deleted",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "TableListOfColumnsDeleted",
+										"value": {
+											"value": "@activity('Get List of columns Deleted').output.firstRow.output",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"value": "OldVersion",
+							"activities": [
+								{
+									"name": "Delete last run version file",
+									"type": "Delete",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.00:15:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "ds_datamart_table_merge_dls_dest",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"SchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"FileType": "change_tracking"
+											}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobFSReadSettings",
+											"recursive": true,
+											"enablePartitionDiscovery": false
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "Get Timestamp from Source",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:15:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"sqlReaderQuery": {
+							"value": "SELECT COALESCE(MAX( \n    @{pipeline().parameters.IncrementalColumn}\n    )\n    , '1900-01-01T00:00:00Z') AS NewCheckpoint\nFROM \n\t[@{pipeline().parameters.SchemaName}].[@{pipeline().parameters.TableName}]",
+							"type": "Expression"
+						},
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"dataset": {
+						"referenceName": "ds_datamart_table_sql_src",
+						"type": "DatasetReference",
+						"parameters": {
+							"TableName": {
+								"value": "@pipeline().parameters.TableName",
+								"type": "Expression"
+							},
+							"TableSchemaName": {
+								"value": "@pipeline().parameters.SchemaName",
+								"type": "Expression"
+							},
+							"ConnectionString": {
+								"value": "@pipeline().parameters.ConnectionString",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": true
+				}
+			},
+			{
+				"name": "Set Source Timestamp as NewCheckPoint",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Get Timestamp from Source",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "NewCheckpoint",
+					"value": {
+						"value": "@if(\n    contains(\n        activity('Get Timestamp from Source').output, 'firstRow'\n        ),\n    activity('Get Timestamp from Source').output.firstRow.NewCheckpoint,\n    '1900-01-01T00:00:00Z'\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Get Timestamp from Checkpoint",
+				"type": "Lookup",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.00:15:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "ParquetSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "ParquetReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_datamart_raw_checkpoint",
+						"type": "DatasetReference",
+						"parameters": {
+							"Tenant": {
+								"value": "@pipeline().parameters.TenantName",
+								"type": "Expression"
+							},
+							"Product": {
+								"value": "@pipeline().parameters.ProductName",
+								"type": "Expression"
+							},
+							"TableName": {
+								"value": "@pipeline().parameters.TableName",
+								"type": "Expression"
+							},
+							"SchemaName": {
+								"value": "@pipeline().parameters.SchemaName",
+								"type": "Expression"
+							}
+						}
+					}
+				}
+			},
+			{
+				"name": "Set Existing Timestamp as CheckPoint",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Get Timestamp from Checkpoint",
+						"dependencyConditions": [
+							"Completed"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "Checkpoint",
+					"value": {
+						"value": "@if(\n    contains(\n        activity('Get Timestamp from Checkpoint').output, 'firstRow'\n        ),\n    activity('Get Timestamp from Checkpoint').output.firstRow.RawCheckpoint,\n    '1800-01-01T00:00:00Z'\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Switch Check Checkpoint",
+				"type": "Switch",
+				"dependsOn": [
+					{
+						"activity": "Set Source Timestamp as NewCheckPoint",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Set Existing Timestamp as CheckPoint",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@if(\n    equals(\n            variables('NewCheckpoint'),\n            variables('Checkpoint')\n    ),\n    'OldCheckpoint',\n    'NewCheckpoint'\n)",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "NewCheckpoint",
+							"activities": [
+								{
+									"name": "Copy table data",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Set List of columns",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.01:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "DECLARE @DynamicSQL NVARCHAR(MAX)\n\nSET @DynamicSQL = 'SELECT\n\t@{variables('TableListOfColumns')},\n\t@{pipeline().parameters.IncrementalColumn},\n\t''IU'' AS Flag,\n\t''@{pipeline().parameters.ADFRunId}'' AS ADFRunId,\n\tGETDATE() AS LoadDate\nFROM\n\t[@{pipeline().parameters.SchemaName}].[@{pipeline().parameters.TableName}]\nWHERE\n\tCOALESCE(@{pipeline().parameters.IncrementalColumn}, ''1900-01-01T00:00:00Z'') > ''@{variables('Checkpoint')}'' \n\tAND COALESCE(@{pipeline().parameters.IncrementalColumn}, ''1900-01-01T00:00:00Z'') <= ''@{variables('NewCheckpoint')}''\n'\nEXEC sp_executesql @DynamicSQL;",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"parallelCopies": 1,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_datamart_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_datamart_table_merge_dls_dest",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"SchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"FileType": "update_timestamp"
+											}
+										}
+									]
+								},
+								{
+									"name": "Get List of columns",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.00:15:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "\nSELECT STUFF((\n\tSELECT\n\t\t', [' + sysC.name + ']'\n\tFROM \n\t\tsys.columns AS sysC\t\n\tINNER JOIN sys.tables AS sysT\n\t\tON sysC.object_id = sysT.object_id\n\tINNER JOIN sys.schemas AS sysS\n\t\tON sysT.schema_id = sysS.schema_id\t\t\n\tWHERE\n\t\tsysS.name = '@{pipeline().parameters.SchemaName}'\n\t\tAND sysT.name = '@{pipeline().parameters.TableName}'\n\t\tAND sysC.name NOT IN ('@{pipeline().parameters.IncrementalColumn}')\n\tORDER BY\n\t\tsysC.name\n\tFOR XML PATH('')\n), 1, 1, '') AS [output]\n",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "ds_datamart_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										},
+										"firstRowOnly": true
+									}
+								},
+								{
+									"name": "Set List of columns",
+									"type": "SetVariable",
+									"dependsOn": [
+										{
+											"activity": "Get List of columns",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"variableName": "TableListOfColumns",
+										"value": {
+											"value": "@activity('Get List of columns').output.firstRow.output",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"value": "OldCheckpoint",
+							"activities": [
+								{
+									"name": "Delete last run timestamp file",
+									"type": "Delete",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.00:15:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"dataset": {
+											"referenceName": "ds_datamart_table_merge_dls_dest",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"SchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"FileType": "update_timestamp"
+											}
+										},
+										"enableLogging": false,
+										"storeSettings": {
+											"type": "AzureBlobFSReadSettings",
+											"recursive": true,
+											"enablePartitionDiscovery": false
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			},
+			{
+				"name": "Switch Check Data",
+				"type": "Switch",
+				"dependsOn": [
+					{
+						"activity": "Switch Delete Change Tracking",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "Switch Check Checkpoint",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@if(\n\tand(\n        equals(\n            variables('NewVersion'),\n\t\t\tvariables('Version')\n            ),\n            equals(\n            variables('NewCheckpoint'),\n            variables('Checkpoint')\n            )\n\t),\n    'NoData',\n\t'Data' \n)\n",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "Data",
+							"activities": [
+								{
+									"name": "Merge files",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "ParquetSource",
+											"storeSettings": {
+												"type": "AzureBlobFSReadSettings",
+												"recursive": true,
+												"wildcardFolderPath": {
+													"value": "@concat(\n    'raw/',\n    pipeline().parameters.ProductName,\n    '/',\n    pipeline().parameters.SchemaName,\n    '/',\n    pipeline().parameters.TableName,\n    '/_merge'\n)",
+													"type": "Expression"
+												},
+												"wildcardFileName": {
+													"value": "@concat(\n    pipeline().parameters.TenantName, \n    '_', \n    pipeline().parameters.ProductName, \n    '_', \n    pipeline().parameters.SchemaName, \n    '_', \n    pipeline().parameters.TableName,\n    '_*.parquet'\n)",
+													"type": "Expression"
+												},
+												"enablePartitionDiscovery": false
+											},
+											"formatSettings": {
+												"type": "ParquetReadSettings"
+											}
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings",
+												"copyBehavior": "MergeFiles"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"enableSkipIncompatibleRow": true,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_datamart_table_merge",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"SchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_datamart_table_dls_dest",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"SchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"LoadDate": {
+													"value": "@pipeline().parameters.LoadDate",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Save Version CheckPoint",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Merge files",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.01:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "SELECT\n    '@{variables('NewVersion')}' AS RawVersionCheckpoint,\n    '@{pipeline().parameters.ADFRunId}' AS ADFRunId",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"parallelCopies": 1,
+										"dataIntegrationUnits": 2,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_datamart_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_datamart_raw_checkpoint_version",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"SchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								},
+								{
+									"name": "Save UpdateTimestamp CheckPoint",
+									"type": "Copy",
+									"dependsOn": [
+										{
+											"activity": "Merge files",
+											"dependencyConditions": [
+												"Succeeded"
+											]
+										}
+									],
+									"policy": {
+										"timeout": "0.01:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"sqlReaderQuery": {
+												"value": "SELECT\n    '@{variables('NewCheckpoint')}' AS RawCheckpoint,\n    '@{pipeline().parameters.ADFRunId}' AS ADFRunId",
+												"type": "Expression"
+											},
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"parallelCopies": 1,
+										"dataIntegrationUnits": 2,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_datamart_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_datamart_raw_checkpoint",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"SchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"TenantName": {
+				"type": "string"
+			},
+			"ProductName": {
+				"type": "string"
+			},
+			"SchemaName": {
+				"type": "string"
+			},
+			"TableName": {
+				"type": "string"
+			},
+			"IncrementalColumn": {
+				"type": "string"
+			},
+			"PrimaryKeyColumn": {
+				"type": "string"
+			},
+			"ConnectionString": {
+				"type": "string"
+			},
+			"LoadDate": {
+				"type": "string"
+			},
+			"ADFRunId": {
+				"type": "string"
+			},
+			"PrimaryConnectionString": {
+				"type": "string",
+				"defaultValue": "None"
+			}
+		},
+		"variables": {
+			"TableDateCheckpoint": {
+				"type": "String",
+				"defaultValue": "1900-01-01T00:00:00Z"
+			},
+			"NewCheckpoint": {
+				"type": "String"
+			},
+			"Checkpoint": {
+				"type": "String"
+			},
+			"TableListOfColumns": {
+				"type": "String"
+			},
+			"Version": {
+				"type": "Integer"
+			},
+			"NewVersion": {
+				"type": "Integer"
+			},
+			"TableListOfColumnsDeleted": {
+				"type": "String"
+			}
+		},
+		"folder": {
+			"name": "others"
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-03-10T01:02:24Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

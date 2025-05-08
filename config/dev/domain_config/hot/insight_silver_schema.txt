@@ -1,0 +1,108 @@
+CREATE TABLE IF NOT EXISTS {table_prefix}_shift (
+    reference STRING,
+    worker_reference STRING,
+    start_datetime_local TIMESTAMP,
+    start_datetime_utc TIMESTAMP,
+    end_datetime_local TIMESTAMP,
+    end_datetime_utc TIMESTAMP,
+	load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{silver_location}/{table_prefix}_shift'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_activity (
+    reference STRING,
+    resource_reference STRING,
+    parent_activity_reference STRING,
+    task_reference STRING,
+    start_datetime_local TIMESTAMP,
+    start_datetime_utc TIMESTAMP,
+    end_datetime_local TIMESTAMP,
+    end_datetime_utc TIMESTAMP,
+    start_latitude DOUBLE,
+    start_longitude DOUBLE,
+    start_location_validity BOOLEAN,
+    finish_latitude DOUBLE,
+    finish_longitude DOUBLE,
+    finish_location_validity BOOLEAN,
+    planned_start_datetime_local TIMESTAMP,
+    planned_start_datetime_utc TIMESTAMP,
+    planned_end_datetime_local TIMESTAMP,
+    planned_end_datetime_utc TIMESTAMP,
+    planned_start_latitude DOUBLE,
+    planned_start_longitude DOUBLE,
+    planned_start_location_validity BOOLEAN,
+    planned_finish_latitude DOUBLE,
+    planned_finish_longitude DOUBLE,
+    planned_finish_location_validity BOOLEAN,
+    type STRING,
+    version INT,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{silver_location}/{table_prefix}_activity'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_task (
+    reference STRING,
+    resource_reference STRING,                  -- From ALLOCATION
+
+    -- allocated_datetime_local TIMESTAMP,      -- not yet needed
+    -- allocated_datetime_utc TIMESTAMP,        -- not yet needed
+
+    allocation_version INT,
+    created_datetime_local TIMESTAMP,
+    created_datetime_utc TIMESTAMP,
+
+    -- start_datetime_local TIMESTAMP,          -- TASKS start and end times come from MILESTONES
+    -- start_datetime_utc TIMESTAMP,            -- TASKS start and end times come from MILESTONES
+    -- end_datetime_local TIMESTAMP,            -- TASKS start and end times come from MILESTONES
+    -- end_datetime_utc TIMESTAMP,              -- TASKS start and end times come from MILESTONES
+    
+    planned_start_datetime_local TIMESTAMP,
+    planned_start_datetime_utc TIMESTAMP,
+
+    -- planned_end_datetime_local TIMESTAMP,    -- planned end time comes from MILESTONE
+    -- planned_end_datetime_utc TIMESTAMP,      -- planned end time comes from MILESTONE
+
+    outcome_code STRING,                           -- "FIXED", "FURTHER_VISIT_REQUIRED"
+    outcome_type STRING,                           -- "ABORT", "ATTENDED", "NO_ACCESS"
+    visit_code STRING,                             -- "FIRST", "FURTHER_VISIT"
+    visit_count INT,                            -- Number of visits if not first? Needed???
+    action_type STRING,                            -- "CLOSE", "CANCEL", inferred from action_type
+    action_version INT,
+    task_type STRING,
+    class STRING,
+    duration DOUBLE,
+    rank INT,
+    task_version INT,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{silver_location}/{table_prefix}_task'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_milestone (
+    reference STRING,
+    task_reference STRING,
+    resource_reference STRING,
+    created_datetime_local TIMESTAMP,
+    created_datetime_utc TIMESTAMP,
+    planned_datetime_local TIMESTAMP,
+    planned_datetime_utc TIMESTAMP,
+    type STRING,
+    version INT,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{silver_location}/{table_prefix}_milestone'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+)

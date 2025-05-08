@@ -1,0 +1,152 @@
+{
+	"name": "data_sharing_nested_loop",
+	"properties": {
+		"activities": [
+			{
+				"name": "For Each Relevant Table",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@pipeline().parameters.FolderList",
+						"type": "Expression"
+					},
+					"batchCount": 50,
+					"activities": [
+						{
+							"name": "Push Table",
+							"description": "",
+							"type": "Copy",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "7.00:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "BinarySource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"modifiedDatetimeStart": {
+											"value": "@pipeline().parameters.LastModifiedFrom",
+											"type": "Expression"
+										},
+										"modifiedDatetimeEnd": {
+											"value": "@{pipeline().parameters.LastModifiedTo}",
+											"type": "Expression"
+										},
+										"wildcardFolderPath": {
+											"value": "@concat(\n    'lakehouse',\n    '/',\n    pipeline().parameters.Layer,\n    '/',\n    item().name\n)",
+											"type": "Expression"
+										},
+										"deleteFilesAfterCompletion": false
+									},
+									"formatSettings": {
+										"type": "BinaryReadSettings"
+									}
+								},
+								"sink": {
+									"type": "BinarySink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									}
+								},
+								"enableStaging": false
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_data_sharing_renfrewshire_src",
+									"type": "DatasetReference",
+									"parameters": {
+										"TenantName": {
+											"value": "@pipeline().parameters.TenantName",
+											"type": "Expression"
+										},
+										"ProductName": {
+											"value": "@pipeline().parameters.ProductName",
+											"type": "Expression"
+										},
+										"Layer": {
+											"value": "@pipeline().parameters.Layer",
+											"type": "Expression"
+										},
+										"FolderName": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_data_sharing_renfrewshire_dest",
+									"type": "DatasetReference",
+									"parameters": {
+										"TenantName": {
+											"value": "@pipeline().parameters.TenantName",
+											"type": "Expression"
+										},
+										"ProductName": {
+											"value": "@pipeline().parameters.ProductName",
+											"type": "Expression"
+										},
+										"Layer": {
+											"value": "@pipeline().parameters.Layer",
+											"type": "Expression"
+										},
+										"TenantStorageAccount": {
+											"value": "@pipeline().parameters.TenantStorageAccount",
+											"type": "Expression"
+										},
+										"FolderName": {
+											"value": "@item().name",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"FolderList": {
+				"type": "array"
+			},
+			"TenantName": {
+				"type": "string"
+			},
+			"ProductName": {
+				"type": "string"
+			},
+			"Layer": {
+				"type": "string"
+			},
+			"LastModifiedFrom": {
+				"type": "string"
+			},
+			"LastModifiedTo": {
+				"type": "string"
+			},
+			"TenantStorageAccount": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"FolderList": {
+				"type": "Array"
+			}
+		},
+		"folder": {
+			"name": "others"
+		},
+		"annotations": []
+	}
+}

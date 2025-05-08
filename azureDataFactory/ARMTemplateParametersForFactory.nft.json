@@ -1,0 +1,60 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "nft-analytics-u-uks-df"
+		},
+		"ls_analytics_dls_properties_typeProperties_url": {
+			"value": "https://nftanalyticsuuksst.dfs.core.windows.net/"
+		},
+		"ls_analytics_kv_properties_typeProperties_baseUrl": {
+			"value": "https://nft-analytics-u-uks-kv.vault.azure.net/"
+		},
+		"ls_sqldb_properties_typeProperties_connectionString_secretName": {
+            "value": "@linkedService().ConnectionString"
+        },
+        "blobManagedPrivateEndpoint_properties_privateLinkResourceId": {
+            "value": "/subscriptions/aee60e3f-cf4f-4805-8e74-c98a420b031c/resourceGroups/nft-analytics-u-uks-rg/providers/Microsoft.Storage/storageAccounts/nftanalyticsuuksst"
+        },
+        "blobManagedPrivateEndpoint_properties_groupId": {
+            "value": "dfs"
+        },
+        "keyVaultManagedPrivateEndpoint_properties_privateLinkResourceId": {
+            "value": "/subscriptions/aee60e3f-cf4f-4805-8e74-c98a420b031c/resourceGroups/nft-analytics-u-uks-rg/providers/Microsoft.KeyVault/vaults/nft-analytics-u-uks-kv"
+        },
+        "keyVaultManagedPrivateEndpoint_properties_groupId": {
+            "value": "vault"
+        },
+        "sqlDbManagedPrivateEndpoint_properties_privateLinkResourceId": {
+            "value": "/subscriptions/c3591951-1c32-41b8-a9fa-0303892cd4af/resourceGroups/Dev-Saas/providers/Microsoft.Sql/servers/dev-saas-sqlserver"
+        },
+        "sqlDbManagedPrivateEndpoint_properties_groupId": {
+            "value": "sqlServer"
+        },
+        "ls_data_sharing_renfrewshire_src_dls_properties_typeProperties_url": {
+            "value": "https://nftanalyticsuuksst.dfs.core.windows.net/"
+        },
+        "ls_data_sharing_renfrewshire_target_dls_properties_typeProperties_url": {
+            "value": "@{concat(\n    'https://',\n    linkedService().TenantStorageAccount,\n    '.dfs.core.windows.net/'\n    )\n}\n"
+        },
+        "tr_data_sharing_all_properties_0_parameters_tenant_product_file_name": {
+            "value": "tenant_product.json"
+        },
+        "renfrewshire_properties_typeProperties_resourceId": {
+            "value": "/subscriptions/aee60e3f-cf4f-4805-8e74-c98a420b031c/resourceGroups/nft-analytics-u-uks-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/nftrenfrewshireuami"
+        },
+        "blobRenfrewshireMPE_properties_privateLinkResourceId": {
+            "value": "/subscriptions/aee60e3f-cf4f-4805-8e74-c98a420b031c/resourceGroups/nft-analytics-u-uks-rg/providers/Microsoft.Storage/storageAccounts/nftrenfrewshirest"
+        },
+        "blobRenfrewshireMPE_properties_groupId": {
+            "value": "blob"
+        },
+        "dfsRenfrewshireMPE_properties_privateLinkResourceId": {
+            "value": "/subscriptions/aee60e3f-cf4f-4805-8e74-c98a420b031c/resourceGroups/nft-analytics-u-uks-rg/providers/Microsoft.Storage/storageAccounts/nftrenfrewshirest"
+        },
+        "dfsRenfrewshireMPE_properties_groupId": {
+            "value": "dfs"
+        }
+	}
+}

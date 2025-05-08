@@ -1,0 +1,38 @@
+[
+    {
+        "TableName": "bulletin",
+        "PrimaryKeys": null,
+        "DataLayer": "silver",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "dim_date",
+        "PrimaryKeys": "calendar_date",
+        "DataLayer": "gold",
+        "LoadType": "batch"
+    },
+    {
+        "TableName": "dim_user",
+        "PrimaryKeys": "user_key",
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "dim_subject",
+        "PrimaryKeys": "subject",
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "dim_status",
+        "PrimaryKeys": "status",
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "fact_bulletins",
+        "PrimaryKeys": "unique_key, dim_user_id",
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    }
+]

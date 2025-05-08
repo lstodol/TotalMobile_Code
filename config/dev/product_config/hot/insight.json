@@ -1,0 +1,27 @@
+[
+    {
+        "TableName": "activity",
+        "DataLayer": "bronze",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "task",
+        "DataLayer": "bronze",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "milestone",
+        "DataLayer": "bronze",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "allocation",
+        "DataLayer": "bronze",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "action",
+        "DataLayer": "bronze",
+        "LoadType": "stream"
+    }
+]

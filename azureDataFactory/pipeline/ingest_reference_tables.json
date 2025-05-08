@@ -1,0 +1,160 @@
+{
+	"name": "ingest_reference_tables",
+	"properties": {
+		"activities": [
+			{
+				"name": "Switch Reference Table Not Exists",
+				"type": "Switch",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"on": {
+						"value": "@if(\n    equals(pipeline().parameters.FileExists, false),\n    'NotExists',\n    'Exists'\n)",
+						"type": "Expression"
+					},
+					"cases": [
+						{
+							"value": "NotExists",
+							"activities": [
+								{
+									"name": "Ingest Reference Table",
+									"type": "Copy",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.01:00:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"typeProperties": {
+										"source": {
+											"type": "AzureSqlSource",
+											"additionalColumns": [
+												{
+													"name": "ADFRunId",
+													"value": {
+														"value": "@pipeline().parameters.ADFRunId",
+														"type": "Expression"
+													}
+												},
+												{
+													"name": "LoadDate",
+													"value": {
+														"value": "@utcNow()",
+														"type": "Expression"
+													}
+												},
+												{
+													"name": "Flag",
+													"value": "I"
+												}
+											],
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"sink": {
+											"type": "ParquetSink",
+											"storeSettings": {
+												"type": "AzureBlobFSWriteSettings"
+											},
+											"formatSettings": {
+												"type": "ParquetWriteSettings"
+											}
+										},
+										"enableStaging": false,
+										"parallelCopies": 1,
+										"dataIntegrationUnits": 2,
+										"translator": {
+											"type": "TabularTranslator",
+											"typeConversion": true,
+											"typeConversionSettings": {
+												"allowDataTruncation": true,
+												"treatBooleanAsNumber": false
+											}
+										}
+									},
+									"inputs": [
+										{
+											"referenceName": "ds_reference_table_sql_src",
+											"type": "DatasetReference",
+											"parameters": {
+												"TableName": {
+													"value": "@pipeline().parameters.TableName",
+													"type": "Expression"
+												},
+												"TableSchemaName": {
+													"value": "@pipeline().parameters.SchemaName",
+													"type": "Expression"
+												},
+												"ConnectionString": {
+													"value": "@pipeline().parameters.ConnectionString",
+													"type": "Expression"
+												}
+											}
+										}
+									],
+									"outputs": [
+										{
+											"referenceName": "ds_reference_table_dls_dest",
+											"type": "DatasetReference",
+											"parameters": {
+												"Tenant": {
+													"value": "@pipeline().parameters.TenantName",
+													"type": "Expression"
+												},
+												"Product": {
+													"value": "@pipeline().parameters.ProductName",
+													"type": "Expression"
+												},
+												"Table": {
+													"value": "@toLower(pipeline().parameters.TableName)",
+													"type": "Expression"
+												},
+												"LoadDate": {
+													"value": "@formatDateTime(utcNow(), 'yyyyMMdd')",
+													"type": "Expression"
+												},
+												"Schema": {
+													"value": "@toLower(pipeline().parameters.SchemaName)",
+													"type": "Expression"
+												}
+											}
+										}
+									]
+								}
+							]
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"TenantName": {
+				"type": "string"
+			},
+			"ProductName": {
+				"type": "string"
+			},
+			"SchemaName": {
+				"type": "string"
+			},
+			"TableName": {
+				"type": "string"
+			},
+			"FileExists": {
+				"type": "bool"
+			},
+			"ConnectionString": {
+				"type": "string"
+			},
+			"ADFRunId": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "others"
+		},
+		"annotations": []
+	}
+}

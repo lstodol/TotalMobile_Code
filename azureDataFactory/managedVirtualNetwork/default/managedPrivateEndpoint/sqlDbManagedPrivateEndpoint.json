@@ -1,0 +1,7 @@
+{
+	"name": "sqlDbManagedPrivateEndpoint",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/c3591951-1c32-41b8-a9fa-0303892cd4af/resourceGroups/Dev-Saas/providers/Microsoft.Sql/servers/dev-saas-sqlserver",
+		"groupId": "sqlServer"
+	}
+}

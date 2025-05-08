@@ -1,0 +1,30 @@
+{
+	"name": "ls_sqldb",
+	"properties": {
+		"parameters": {
+			"ConnectionString": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureSqlDatabase",
+		"typeProperties": {
+			"connectionString": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "ls_analytics_kv",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": {
+					"value": "@linkedService().ConnectionString",
+					"type": "Expression"
+				}
+			}
+		},
+		"connectVia": {
+			"referenceName": "managedIR",
+			"type": "IntegrationRuntimeReference"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
+}

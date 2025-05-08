@@ -1,0 +1,68 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "prod-analytics-u-uks-df"
+		},
+		"ls_analytics_dls_properties_typeProperties_url": {
+			"value": "https://prodanalyticsuuksst.dfs.core.windows.net/"
+		},
+		"ls_analytics_kv_properties_typeProperties_baseUrl": {
+			"value": "https://prod-analytics-u-uks-kv.vault.azure.net/"
+		},
+        "ls_sqldb_properties_typeProperties_connectionString_secretName": {
+            "value": "@linkedService().ConnectionString"
+        },
+        "blobManagedPrivateEndpoint_properties_privateLinkResourceId": {
+            "value": "/subscriptions/adfa53a1-86e8-4816-860f-dd457701ad50/resourceGroups/prod-analytics-u-uks-rg/providers/Microsoft.Storage/storageAccounts/prodanalyticsuuksst"
+        },
+        "blobManagedPrivateEndpoint_properties_groupId": {
+            "value": "dfs"
+        },
+        "keyVaultManagedPrivateEndpoint_properties_privateLinkResourceId": {
+            "value": "/subscriptions/adfa53a1-86e8-4816-860f-dd457701ad50/resourceGroups/prod-analytics-u-uks-rg/providers/Microsoft.KeyVault/vaults/prod-analytics-u-uks-kv"
+        },
+        "keyVaultManagedPrivateEndpoint_properties_groupId": {
+            "value": "vault"
+        },
+        "sqlDbManagedPrivateEndpoint_properties_privateLinkResourceId": {
+            "value": "/subscriptions/86584f4f-c24e-4ba4-b113-fe6e03be28f5/resourceGroups/paas-ancillaries/providers/Microsoft.Sql/servers/ukw-sql-mob"  
+        },
+        "sqlDbManagedPrivateEndpoint_properties_groupId": {
+            "value": "sqlServer"
+        },
+        "primarySqlDbManagedPrivateEndpoint_properties_privateLinkResourceId": {
+            "value": "/subscriptions/86584f4f-c24e-4ba4-b113-fe6e03be28f5/resourceGroups/paas-ancillaries/providers/Microsoft.Sql/servers/uks-sql-mob"  
+        },
+        "primarySqlDbManagedPrivateEndpoint_properties_groupId": {
+            "value": "sqlServer"
+        },
+        "ls_data_sharing_renfrewshire_src_dls_properties_typeProperties_url": {
+            "value": "https://prodanalyticsuuksst.dfs.core.windows.net/"
+        },
+        "ls_data_sharing_renfrewshire_target_dls_properties_typeProperties_url": {
+            "value": "@{concat(\n    'https://',\n    linkedService().TenantStorageAccount,\n    '.dfs.core.windows.net/'\n    )\n}\n"
+        },
+        "tr_data_sharing_all_properties_0_parameters_tenant_product_file_name": {
+            "value": "tenant_product.json"
+        },
+        "renfrewshire_properties_typeProperties_resourceId": {
+            "value": "/subscriptions/adfa53a1-86e8-4816-860f-dd457701ad50/resourceGroups/prod-analytics-u-uks-rg/providers/Microsoft.ManagedIdentity/userAssignedIdentities/renfrewshireuami"
+        },
+        "blobRenfrewshireMPE_properties_privateLinkResourceId": {
+            "value": "/subscriptions/adfa53a1-86e8-4816-860f-dd457701ad50/resourceGroups/prod-analytics-u-uks-rg/providers/Microsoft.Storage/storageAccounts/renfrewshirest"
+        },
+        "blobRenfrewshireMPE_properties_groupId": {
+            "value": "blob"
+        },
+        "dfsRenfrewshireMPE_properties_privateLinkResourceId": {
+            "value": "/subscriptions/adfa53a1-86e8-4816-860f-dd457701ad50/resourceGroups/prod-analytics-u-uks-rg/providers/Microsoft.Storage/storageAccounts/renfrewshirest"
+        },
+        "dfsRenfrewshireMPE_properties_groupId": {
+            "value": "dfs"
+        }
+	}
+}
+
+

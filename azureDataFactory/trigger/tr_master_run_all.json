@@ -1,0 +1,24 @@
+{
+	"name": "tr_master_run_all",
+	"properties": {
+		"annotations": [],
+		"runtimeState": "Stopped",
+		"pipelines": [
+			{
+				"pipelineReference": {
+					"referenceName": "_master",
+					"type": "PipelineReference"
+				}
+			}
+		],
+		"type": "ScheduleTrigger",
+		"typeProperties": {
+			"recurrence": {
+				"frequency": "Minute",
+				"interval": 15,
+				"startTime": "2022-12-18T00:00:00Z",
+				"timeZone": "UTC"
+			}
+		}
+	}
+}

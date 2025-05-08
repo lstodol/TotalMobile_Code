@@ -1,0 +1,96 @@
+CREATE TABLE IF NOT EXISTS {table_prefix}_activity (
+    reference STRING,
+    resource_reference STRING,
+    parent_activity_reference STRING,
+    task_reference STRING,
+    start_datetime_local TIMESTAMP,
+    finish_datetime_local TIMESTAMP,
+    start_latitude DOUBLE,
+    start_longitude DOUBLE,
+    start_location_validity BOOLEAN,
+    finish_latitude DOUBLE,
+    finish_longitude DOUBLE,
+    finish_location_validity BOOLEAN,
+    timezone STRING,
+    basis STRING,
+    type STRING,
+    version INT,
+	load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_activity'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_task (
+    reference STRING,
+    created_datetime_local TIMESTAMP,
+    type STRING,
+    class STRING,
+    visit_code STRING,
+    visit_count INT,
+    duration DOUBLE,
+    rank INT,
+    timezone STRING,
+    version INT,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_task'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_milestone (
+    reference STRING,
+    resource_reference STRING,
+    task_reference STRING,
+    created_datetime_local TIMESTAMP,
+    basis INT,
+    type STRING,
+    timezone STRING,
+    version INT,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_milestone'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_allocation (
+    reference STRING,
+    resource_reference STRING,
+    task_reference STRING,
+    allocation_datetime_local TIMESTAMP,
+    planned_start_datetime_local TIMESTAMP,
+    timezone STRING,
+    version INT,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_allocation'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_action (
+    reference STRING,
+    task_reference STRING,
+    action_datetime_local TIMESTAMP,
+    type STRING,
+    force BOOLEAN,
+    outcome_code STRING,
+    outcome_type STRING,
+    no_visit_code STRING,
+    description STRING,
+    timezone STRING,
+    version INT,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_action'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+)

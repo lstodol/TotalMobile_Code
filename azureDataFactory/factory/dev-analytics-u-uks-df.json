@@ -1,0 +1,9 @@
+{
+	"name": "dev-analytics-u-uks-df",
+	"properties": {
+		"globalConfigurations": {
+			"PipelineBillingEnabled": "true"
+		}
+	},
+	"location": "uksouth"
+}

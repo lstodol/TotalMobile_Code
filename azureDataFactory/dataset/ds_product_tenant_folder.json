@@ -1,0 +1,22 @@
+{
+	"name": "ds_product_tenant_folder",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_analytics_dls",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "data_sharing"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "tenant_config",
+				"fileSystem": "config"
+			}
+		},
+		"schema": {}
+	}
+}

@@ -1,0 +1,30 @@
+{
+    "name": "job_wrapper_scheduler_hot",
+    "email_notifications": {
+      "on_failure": [
+        "TO BE REPLACED BY JOB DEPLOYMENT"
+      ],
+      "no_alert_for_skipped_runs": true
+    },
+    "webhook_notifications": {},
+    "notification_settings": {
+      "no_alert_for_skipped_runs": true,
+      "no_alert_for_canceled_runs": true
+    },
+    "timeout_seconds": 0,
+    "max_concurrent_runs": 1,
+    "tasks": [
+      {
+        "task_key": "job_wrapper_scheduler_hot",
+        "run_if": "ALL_SUCCESS",
+        "notebook_task": {
+          "notebook_path": "/Analytics/job_wrapper_hot",
+          "base_parameters": {
+            "cluster_name": "TO BE REPLACED BY JOB DEPLOYMENT"
+          },
+          "source": "WORKSPACE"
+        },
+        "existing_cluster_id": "TO BE REPLACED BY JOB DEPLOYMENT"
+      }
+    ]
+  }

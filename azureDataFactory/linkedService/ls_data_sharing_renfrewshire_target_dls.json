@@ -1,0 +1,24 @@
+{
+	"name": "ls_data_sharing_renfrewshire_target_dls",
+	"properties": {
+		"parameters": {
+			"TenantStorageAccount": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "@{concat(\n    'https://',\n    linkedService().TenantStorageAccount,\n    '.dfs.core.windows.net/'\n    )\n}\n",
+			"credential": {
+				"referenceName": "renfrewshire",
+				"type": "CredentialReference"
+			}
+		},
+		"connectVia": {
+			"referenceName": "managedIR",
+			"type": "IntegrationRuntimeReference"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
+}

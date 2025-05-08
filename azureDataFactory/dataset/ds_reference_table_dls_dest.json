@@ -1,0 +1,51 @@
+{
+	"name": "ds_reference_table_dls_dest",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_analytics_dls",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Tenant": {
+				"type": "string"
+			},
+			"Product": {
+				"type": "string"
+			},
+			"Table": {
+				"type": "string"
+			},
+			"LoadDate": {
+				"type": "string"
+			},
+			"Schema": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "dls"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(\n    dataset().Tenant, \n    '_', \n    dataset().Product, \n    '_', \n    dataset().Schema, \n    '_', \n    dataset().Table, \n    '_', \n    dataset().LoadDate, \n    '.parquet'\n)\n",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat(\n    'raw/',\n    dataset().Product,\n    '/',\n    dataset().Schema,\n    '/',\n    dataset().Table\n)",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().Tenant",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

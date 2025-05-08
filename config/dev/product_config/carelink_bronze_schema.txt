@@ -1,0 +1,1043 @@
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_address (
+    Id STRING,
+    Name STRING,
+    AddressLine1 STRING,
+    AddressLine2 STRING,
+    AddressLine3 STRING,
+    AddressLine4 STRING,
+    AddressLine5 STRING,
+    Postcode STRING,
+    IsDefault BOOLEAN,
+    Lat DOUBLE,
+    Long DOUBLE,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    AddressType STRING,
+    TemporaryEndDate TIMESTAMP,
+    TemporaryEndTimeId STRING,
+    TemporaryStartDate TIMESTAMP,
+    TemporaryStartTimeId STRING,
+    AddressGroupId STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_address';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_addresshistory (
+    Id STRING,
+    Name STRING,
+    AddressLine1 STRING,
+    AddressLine2 STRING,
+    AddressLine3 STRING,
+    AddressLine4 STRING,
+    AddressLine5 STRING,
+    Postcode STRING,
+    IsDefault BOOLEAN,
+    Lat DOUBLE,
+    Long DOUBLE,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    AddressType STRING,
+    TemporaryEndDate TIMESTAMP,
+    TemporaryEndTimeId STRING,
+    TemporaryStartDate TIMESTAMP,
+    TemporaryStartTimeId STRING,
+    AddressGroupId STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_addresshistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_addressdetail (
+	Id STRING,
+	AddressId STRING,
+	Name STRING,
+	Value STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+	) 
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_addressdetail';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_addressdetailhistory (
+	Id STRING,
+	AddressId STRING,
+	Name STRING,
+	Value STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+	) 
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_addressdetailhistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_carepackage (
+    Id STRING,
+    Manager STRING,
+    StartDate TIMESTAMP,
+    EndDate TIMESTAMP,
+    SelfDirectSupport BOOLEAN,
+    SdsFinanceAmount DECIMAL(18, 2),
+    ServiceTypeId STRING,
+    Status INT,
+    ReferralId STRING,
+    TeamId STRING,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_carepackage';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_carepackagehistory (
+    Id STRING,
+    Manager STRING,
+    StartDate TIMESTAMP,
+    EndDate TIMESTAMP,
+    SelfDirectSupport BOOLEAN,
+    SdsFinanceAmount DECIMAL(18, 2),
+    ServiceTypeId STRING,
+    Status INT,
+    ReferralId STRING,
+    TeamId STRING,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_carepackagehistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_careplan (
+    Id STRING,
+    StartDate TIMESTAMP,
+    EndDate TIMESTAMP,
+    WorkTypeId STRING,
+    CarePlanStatus STRING,
+    IsCurrent STRING,
+    CarePackageId STRING,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_careplan';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_careplanhistory (
+    Id STRING,
+    StartDate TIMESTAMP,
+    EndDate TIMESTAMP,
+    WorkTypeId STRING,
+    CarePlanStatus STRING,
+    IsCurrent STRING,
+    CarePackageId STRING,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_careplanhistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_carerpreference (
+    Id STRING,
+    ResourceUsername STRING,
+    PreferenceType INT,
+    ServiceUserId STRING,
+    ResourceId STRING,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    Rank INT,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_carerpreference';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_carerpreferencehistory (
+    Id STRING,
+    ResourceUsername STRING,
+    PreferenceType INT,
+    ServiceUserId STRING,
+    ResourceId STRING,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    Rank INT,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_carerpreferencehistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_careplanvisit (
+	Id STRING,
+	CarePlanId STRING,
+	VisitId STRING,
+	VisitFrequency STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	FrequencyOffset STRING,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+	) 
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_careplanvisit';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_careplanvisithistory (
+	Id STRING,
+	CarePlanId STRING,
+	VisitId STRING,
+	VisitFrequency STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	FrequencyOffset STRING,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+	) 
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_careplanvisithistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_careplanvisitday (
+	CarePlanVisitId STRING,
+	WorkDayId STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+	) 
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_careplanvisitday';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_careplanvisitdayhistory (
+	CarePlanVisitId STRING,
+	WorkDayId STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+	) 
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_careplanvisitdayhistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_contact (
+    Id STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    LastModifiedByClientId STRING,
+    ServiceUserId STRING,
+    Type STRING,
+    Relationship STRING,
+    Title STRING,
+    Forename STRING,
+    Surname STRING,
+    AddressLine1 STRING,
+    AddressLine2 STRING,
+    AddressLine3 STRING,
+    AddressLine4 STRING,
+    AddressLine5 STRING,
+    Postcode STRING,
+    Phone1 STRING,
+    Phone2 STRING,
+    Phone3 STRING,
+    Email STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ExternalAppId STRING,
+    ExternalId STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_contact';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_contacthistory (
+    Id STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    LastModifiedByClientId STRING,
+    ServiceUserId STRING,
+    Type STRING,
+    Relationship STRING,
+    Title STRING,
+    Forename STRING,
+    Surname STRING,
+    AddressLine1 STRING,
+    AddressLine2 STRING,
+    AddressLine3 STRING,
+    AddressLine4 STRING,
+    AddressLine5 STRING,
+    Postcode STRING,
+    Phone1 STRING,
+    Phone2 STRING,
+    Phone3 STRING,
+    Email STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ExternalAppId STRING,
+    ExternalId STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_contacthistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_document (
+	Id STRING,
+	ReferralId STRING,
+	FileName STRING,
+	MimeType STRING,
+	Description STRING,
+	UriPath STRING,
+	CreatedDate STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ExternalAppId STRING,
+	ExternalId STRING,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+	) 
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_document';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_documenthistory (
+	Id STRING,
+	ReferralId STRING,
+	FileName STRING,
+	MimeType STRING,
+	Description STRING,
+	UriPath STRING,
+	CreatedDate TIMESTAMP,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ExternalAppId STRING,
+	ExternalId STRING,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+	) 
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_documenthistory';
+
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_gender (
+    Id STRING,
+    Gender STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_gender';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_note (
+    Id STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    LastModifiedByClientId STRING,
+    ServiceUserId STRING,
+    ReferralId STRING,
+    Type STRING,
+    Text STRING,
+    CreatedBy STRING,
+    CreatedDate TIMESTAMP,
+    ModifiedBy STRING,
+    ModifiedDate TIMESTAMP,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ExternalAppId STRING,
+    ExternalId STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_note';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_notehistory (
+    Id STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    LastModifiedByClientId STRING,
+    ServiceUserId STRING,
+    ReferralId STRING,
+    Type STRING,
+    Text STRING,
+    CreatedBy STRING,
+    CreatedDate TIMESTAMP,
+    ModifiedBy STRING,
+    ModifiedDate TIMESTAMP,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ExternalAppId STRING,
+    ExternalId STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_notehistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_practitioner (
+	Id STRING,
+	Reference STRING,
+	Forename STRING,
+	Surname STRING,
+	Phone1 STRING,
+	Phone2 STRING,
+	Email STRING,
+	AddressId STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+) 
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_practitioner';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_practitionerhistory (
+	Id STRING,
+	Reference STRING,
+	Forename STRING,
+	Surname STRING,
+	Phone1 STRING,
+	Phone2 STRING,
+	Email STRING,
+	AddressId STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+) 
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_practitionerhistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_referral (
+    Id STRING,
+    Date TIMESTAMP,
+    Reason STRING,
+    ReasonDetails STRING,
+    CommunicationIssues STRING,
+    AccessIssues STRING,
+    MobilityIssues STRING,
+    OtherIssues STRING,
+    MedicationRequirements STRING,
+    MedicalHistory STRING,
+    CreatedDate TIMESTAMP,
+    LastModifiedDate TIMESTAMP,
+    ServiceUserId STRING,
+    StatusId STRING,
+    Priority STRING,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ExternalId STRING,
+    ExternalAppId STRING,
+    Hazards STRING,
+    ClosedReason STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_referral';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_referralhistory (
+    Id STRING,
+    Date TIMESTAMP,
+    Reason STRING,
+    ReasonDetails STRING,
+    CommunicationIssues STRING,
+    AccessIssues STRING,
+    MobilityIssues STRING,
+    OtherIssues STRING,
+    MedicationRequirements STRING,
+    MedicalHistory STRING,
+    CreatedDate TIMESTAMP,
+    LastModifiedDate TIMESTAMP,
+    ServiceUserId STRING,
+    StatusId STRING,
+    Priority STRING,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ExternalId STRING,
+    ExternalAppId STRING,
+    Hazards STRING,
+    ClosedReason STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_referralhistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_referralstatus (
+    Id STRING,
+    Code STRING,
+    Description STRING,
+    Colour STRING,
+    State INT,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_referralstatus';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_referrer (
+	Id STRING,
+	Source STRING,
+	PractitionerId STRING,
+	Title STRING,
+	Forename STRING,
+	Surname STRING,
+	AddressName STRING,
+	AddressLine1 STRING,
+	AddressLine2 STRING,
+	AddressLine3 STRING,
+	AddressLine4 STRING,
+	AddressLine5 STRING,
+	Postcode STRING,
+	Phone1 STRING,
+	Phone2 STRING,
+	Email STRING,
+	Relationship STRING,
+	ReferralId STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	AddressType STRING,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+	) 
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_referrer';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_referrerhistory (
+	Id STRING,
+	Source STRING,
+	PractitionerId STRING,
+	Title STRING,
+	Forename STRING,
+	Surname STRING,
+	AddressName STRING,
+	AddressLine1 STRING,
+	AddressLine2 STRING,
+	AddressLine3 STRING,
+	AddressLine4 STRING,
+	AddressLine5 STRING,
+	Postcode STRING,
+	Phone1 STRING,
+	Phone2 STRING,
+	Email STRING,
+	Relationship STRING,
+	ReferralId STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	AddressType STRING,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+	) 
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_referrerhistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_role (
+    Id STRING,
+    Name STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_role';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_servicetype (
+    Id STRING,
+    Name STRING,
+    Description STRING,
+    AllowSds BOOLEAN,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_servicetype';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_serviceuser (
+	Id STRING,
+	NhsNumber STRING,
+	ExternalReference STRING,
+	Title STRING,
+	Forename STRING,
+	Surname STRING,
+	PreferredName STRING,
+	DateOfBirth TIMESTAMP,
+	DateOfDeath TIMESTAMP,
+	Phone1 STRING,
+	Phone2 STRING,
+	Phone3 STRING,
+	Email STRING,
+	Gender STRING,
+	Ethnicity STRING,
+	Nationality STRING,
+	MaritalStatus STRING,
+	Religion STRING,
+	FirstLanguage STRING,
+	LivesAlone BOOLEAN,
+	Interpreter BOOLEAN,
+	PractitionerId STRING,
+	IsNHSTemporary BOOLEAN,
+	CreatedDate TIMESTAMP,
+	LastModifiedDate TIMESTAMP,
+	Reference INT,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ExternalId STRING,
+	ExternalAppId STRING,
+	NearFieldCommunication STRING,
+    ADFRunId STRING,
+	LoadDate TIMESTAMP
+	) 
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_serviceuser';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_serviceuserhistory (
+	Id STRING,
+	NhsNumber STRING,
+	ExternalReference STRING,
+	Title STRING,
+	Forename STRING,
+	Surname STRING,
+	PreferredName STRING,
+	DateOfBirth TIMESTAMP,
+	DateOfDeath TIMESTAMP,
+	Phone1 STRING,
+	Phone2 STRING,
+	Phone3 STRING,
+	Email STRING,
+	Gender STRING,
+	Ethnicity STRING,
+	Nationality STRING,
+	MaritalStatus STRING,
+	Religion STRING,
+	FirstLanguage STRING,
+	LivesAlone BOOLEAN,
+	Interpreter BOOLEAN,
+	PractitionerId STRING,
+	IsNHSTemporary BOOLEAN,
+	CreatedDate TIMESTAMP,
+	LastModifiedDate TIMESTAMP,
+	Reference INT,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ExternalId STRING,
+	ExternalAppId STRING,
+	NearFieldCommunication STRING,
+    ADFRunId STRING,
+	LoadDate TIMESTAMP
+	) 
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_serviceuserhistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_serviceuseraddress (
+    Id STRING,
+    ServiceUserId STRING,
+    AddressId STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_serviceuseraddress';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_serviceuseraddresshistory (
+    Id STRING,
+    ServiceUserId STRING,
+    AddressId STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_serviceuseraddresshistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_serviceuserunavailability (
+    Id STRING,
+    ServiceUserId STRING,
+    StartDate TIMESTAMP,
+    StartTimeId STRING,
+    EndDate TIMESTAMP,
+    EndTimeId STRING,
+    Notes STRING,
+    Reason STRING,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_serviceuserunavailability';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_serviceuserunavailabilityhistory (
+    Id STRING,
+    ServiceUserId STRING,
+    StartDate TIMESTAMP,
+    StartTimeId STRING,
+    EndDate TIMESTAMP,
+    EndTimeId STRING,
+    Notes STRING,
+    Reason STRING,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_serviceuserunavailabilityhistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_user (
+    Username STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_user';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_userhistory (
+    Username STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_userhistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_userrole (
+    Username STRING,
+    RoleId STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_userrole';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_userrolehistory (
+    Username STRING,
+    RoleId STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_userrolehistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_team (
+    Id STRING,
+    Name STRING,
+    WorldReference STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_team';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_visit (
+	Id STRING,
+	StartTimeId STRING,
+	EndTimeId STRING,
+	Deleted BOOLEAN,
+	Priority STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ExternalAppId STRING,
+	ExternalId STRING,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+) 
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_visit';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_visithistory (
+	Id STRING,
+	StartTimeId STRING,
+	EndTimeId STRING,
+	Deleted BOOLEAN,
+	Priority STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ExternalAppId STRING,
+	ExternalId STRING,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+) 
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_visithistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_visitduration (
+    Id STRING,
+    Minutes INT,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_visitduration';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_visititem (
+	Id STRING,
+	VisitId STRING,
+	TeamId STRING,
+	WorkTypeId STRING,
+	VisitDurationId STRING,
+	RequiredGenderId STRING,
+	Description STRING,
+	SpecialInstructions STRING,
+	Order INT,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+) 
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_visititem';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_visititemhistory (
+	Id STRING,
+	VisitId STRING,
+	TeamId STRING,
+	WorkTypeId STRING,
+	VisitDurationId STRING,
+	RequiredGenderId STRING,
+	Description STRING,
+	SpecialInstructions STRING,
+	Order INT,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+) 
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_visititemhistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_visititemtask (
+    VisitItemId STRING,
+    TaskId STRING,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    EndDate TIMESTAMP,
+    StartDate TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_visititemtask';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_visititemtaskhistory (
+    VisitItemId STRING,
+    TaskId STRING,
+    LastModifiedByClientId STRING,
+    LastModifiedByUserId STRING,
+    LastModifiedByUsername STRING,
+    ValidFrom TIMESTAMP,
+    ValidTo TIMESTAMP,
+    EndDate TIMESTAMP,
+    StartDate TIMESTAMP,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_visititemtaskhistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_visittask (
+    Id STRING,
+    Reference STRING,
+    Name STRING,
+    Description STRING,
+    Order INT,
+    ParentId STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_visittask';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_visittime (
+    Id STRING,
+    Time STRING,
+    Order INT,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_visittime';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_visitworkday (
+    Id STRING,
+    Order INT,
+    Initial STRING,
+    ShortName STRING,
+    Name STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_visitworkday';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_setting (
+    Id STRING,
+    Name STRING,
+    Value STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_setting';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_referralvisit (
+	Id STRING,
+	ReferralId STRING,
+	VisitId STRING,
+	Date TIMESTAMP,
+	LastUpdateUserId STRING,
+	LastUpdateUserName STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_referralvisit';
+
+CREATE TABLE IF NOT EXISTS {history_table_prefix}_audit_referralvisithistory (
+	Id STRING,
+	ReferralId STRING,
+	VisitId STRING,
+	Date TIMESTAMP,
+	LastUpdateUserId STRING,
+	LastUpdateUserName STRING,
+	LastModifiedByClientId STRING,
+	LastModifiedByUserId STRING,
+	LastModifiedByUsername STRING,
+	ValidFrom TIMESTAMP,
+	ValidTo TIMESTAMP,
+	ADFRunId STRING,
+	LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{history_table_prefix}_audit_referralvisithistory';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dbo_publishedvisit (
+	Id STRING,
+	Reference STRING,
+	ServiceUserId STRING,
+	ReferralId STRING,
+	VisitItemId STRING,
+	VisitType STRING,
+	Operation STRING,
+	Destination STRING,
+	TimeStamp TIMESTAMP,
+	VisitDate TIMESTAMP,
+	VisitBody STRING,
+    ADFRunId STRING,
+    LoadDate TIMESTAMP
+)
+USING DELTA
+LOCATION '{bronze_location}/{table_prefix}_dbo_publishedvisit'

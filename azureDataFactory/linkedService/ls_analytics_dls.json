@@ -1,0 +1,15 @@
+{
+	"name": "ls_analytics_dls",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://devanalyticsuuksst.dfs.core.windows.net/"
+		},
+		"connectVia": {
+			"referenceName": "managedIR",
+			"type": "IntegrationRuntimeReference"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/linkedservices"
+}

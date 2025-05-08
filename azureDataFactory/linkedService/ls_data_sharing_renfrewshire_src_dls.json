@@ -1,0 +1,18 @@
+{
+	"name": "ls_data_sharing_renfrewshire_src_dls",
+	"properties": {
+		"annotations": [],
+		"type": "AzureBlobFS",
+		"typeProperties": {
+			"url": "https://devanalyticsuuksst.dfs.core.windows.net/",
+			"credential": {
+				"referenceName": "renfrewshire",
+				"type": "CredentialReference"
+			}
+		},
+		"connectVia": {
+			"referenceName": "managedIR",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

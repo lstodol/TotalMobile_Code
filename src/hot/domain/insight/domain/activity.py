@@ -1,0 +1,1 @@
+ActivityTypeShift = "SHIFT"

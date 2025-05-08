@@ -1,0 +1,9 @@
+requests==2.31.0
+pytest==7.4.2
+xmlrunner==1.7.7
+unittest-xml-reporting==3.2.0
+azure.identity==1.15.0
+azure-storage-blob==12.19.0
+databricks-sdk==0.19.0
+deltalake==0.14.0
+# com.microsoft.azure==azure-eventhubs-spark_2.12:2.3.22

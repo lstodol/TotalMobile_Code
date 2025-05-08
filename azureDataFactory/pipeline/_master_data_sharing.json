@@ -1,0 +1,199 @@
+{
+	"name": "_master_data_sharing",
+	"properties": {
+		"description": "Copy new and changed files only by using LastModifiedDate",
+		"activities": [
+			{
+				"name": "Read Tenant Config",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Set Pipeline Start Datetime",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:15:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_product_tenant_config_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"tenant_product_file_name": {
+								"value": "@pipeline().parameters.tenant_product_file_name",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "Filter Relevant Connections",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "Read Tenant Config",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@if(\n    empty(activity('Read Tenant Config').output.value),\n    json('[]'),\n    activity('Read Tenant Config').output.value\n)",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@and(\n    and(not(empty(item())), equals(item().isActive, true)), \n    and(contains(item(), 'DataSharing'), equals(item().DataSharing.DataSharingEnabled, true))\n)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set Pipeline Start Datetime",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "LastModifiedTo",
+					"value": {
+						"value": "@pipeline().TriggerTime",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Set Connection List",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Filter Relevant Connections",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "ConnectionList",
+					"value": {
+						"value": "@activity('Filter Relevant Connections').output.value",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "For Each Connection",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set Connection List",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('ConnectionList')",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 20,
+					"activities": [
+						{
+							"name": "Data Push",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "data_sharing_loop",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"ConnectionString": {
+										"value": "@item().KeyVaultSourceDBConnString",
+										"type": "Expression"
+									},
+									"TenantName": {
+										"value": "@toLower(item().TenantName)",
+										"type": "Expression"
+									},
+									"ProductName": {
+										"value": "@toLower(item().ProductName)",
+										"type": "Expression"
+									},
+									"LastModifiedTo": {
+										"value": "@variables('LastModifiedTo')",
+										"type": "Expression"
+									},
+									"DataPushLayers": {
+										"value": "@toLower(item().DataSharing.DataSharingLayer)\n",
+										"type": "Expression"
+									},
+									"TenantStorageAccount": {
+										"value": "@toLower(item().DataSharing.TenantStorageAccount)",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"parameters": {
+			"tenant_product_file_name": {
+				"type": "string",
+				"defaultValue": "tenant_product.json"
+			}
+		},
+		"variables": {
+			"LastModifiedTo": {
+				"type": "String"
+			},
+			"ConnectionList": {
+				"type": "Array"
+			},
+			"FolderList": {
+				"type": "Array"
+			}
+		},
+		"annotations": []
+	}
+}

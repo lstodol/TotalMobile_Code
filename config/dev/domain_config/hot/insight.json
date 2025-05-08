@@ -1,0 +1,116 @@
+[
+    {
+        "TableName": "activity",
+		"PrimaryKeys": null,
+        "DataLayer": "silver",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "shift",
+        "PrimaryKeys": null,
+        "DataLayer": "silver",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "task",
+        "PrimaryKeys": null,
+        "DataLayer": "silver",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "taskallocation",
+        "PrimaryKeys": null,
+        "DataLayer": "silver",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "taskaction",
+        "PrimaryKeys": null,
+        "DataLayer": "silver",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "milestone",
+        "PrimaryKeys": null,
+        "DataLayer": "silver",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "shiftfact",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "shiftkpifact",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "batch"
+    },
+    {
+        "TableName": "shiftkpafact",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "shiftkpioverallfact",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "shiftkpaoverallfact",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+	{
+	    "TableName": "shiftexclusionfact",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "batch"
+	},
+    {
+        "TableName": "activityfact",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "taskfact",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "taskstatusfactmilestone",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "taskstatusfactactivity",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "tasklateststatusfact",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "taskgeoroutefact",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    },
+    {
+        "TableName": "activitytimelinefact",
+        "PrimaryKeys": null,
+        "DataLayer": "gold",
+        "LoadType": "stream"
+    }
+]

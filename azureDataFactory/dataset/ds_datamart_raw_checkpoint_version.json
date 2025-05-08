@@ -1,0 +1,48 @@
+{
+	"name": "ds_datamart_raw_checkpoint_version",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_analytics_dls",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"Tenant": {
+				"type": "string"
+			},
+			"Product": {
+				"type": "string"
+			},
+			"TableName": {
+				"type": "string"
+			},
+			"SchemaName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "dls"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(\n    'version',\n    '_',\n    dataset().Tenant, \n    '_', \n    dataset().Product, \n    '_', \n    dataset().SchemaName, \n    '_', \n    dataset().TableName, \n    '.parquet'\n)",
+					"type": "Expression"
+				},
+				"folderPath": {
+					"value": "@concat(\n    'raw/',\n    dataset().Product,\n    '/',\n    dataset().SchemaName,\n    '/',\n    dataset().TableName,\n    '/',\n    '_checkpoint'\n)",
+					"type": "Expression"
+				},
+				"fileSystem": {
+					"value": "@dataset().Tenant",
+					"type": "Expression"
+				}
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

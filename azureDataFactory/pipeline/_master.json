@@ -1,0 +1,198 @@
+{
+	"name": "_master",
+	"properties": {
+		"activities": [
+			{
+				"name": "Read Tenant Config",
+				"type": "Lookup",
+				"dependsOn": [
+					{
+						"activity": "Generate ADFRunId",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.00:15:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "JsonSource",
+						"storeSettings": {
+							"type": "AzureBlobFSReadSettings",
+							"recursive": true,
+							"enablePartitionDiscovery": false
+						},
+						"formatSettings": {
+							"type": "JsonReadSettings"
+						}
+					},
+					"dataset": {
+						"referenceName": "ds_product_tenant_config_json",
+						"type": "DatasetReference",
+						"parameters": {
+							"tenant_product_file_name": {
+								"value": "@pipeline().parameters.tenant_product_file_name",
+								"type": "Expression"
+							}
+						}
+					},
+					"firstRowOnly": false
+				}
+			},
+			{
+				"name": "For Each Connection",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set Connection List",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('ConnectionList')",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"activities": [
+						{
+							"name": "Ingest Raw Data",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "ingest_raw",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"ConnectionString": {
+										"value": "@item().KeyVaultSourceDBConnString",
+										"type": "Expression"
+									},
+									"TenantName": {
+										"value": "@toLower(item().TenantName)",
+										"type": "Expression"
+									},
+									"ProductName": {
+										"value": "@toLower(item().ProductName)",
+										"type": "Expression"
+									},
+									"ADFRunId": {
+										"value": "@variables('ADFRunId')",
+										"type": "Expression"
+									},
+									"PrimaryConnectionString": {
+										"value": "@item().KeyVaultPrimarySourceDBConnString",
+										"type": "Expression"
+									}
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Set Connection List",
+				"type": "SetVariable",
+				"dependsOn": [
+					{
+						"activity": "Filter Active Connections",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "ConnectionList",
+					"value": {
+						"value": "@activity('Filter Active Connections').output.value",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Filter Active Connections",
+				"type": "Filter",
+				"dependsOn": [
+					{
+						"activity": "Read Tenant Config",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@activity('Read Tenant Config').output.value",
+						"type": "Expression"
+					},
+					"condition": {
+						"value": "@equals(item().IsActive, true)",
+						"type": "Expression"
+					}
+				}
+			},
+			{
+				"name": "Generate ADFRunId",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "ADFRunId",
+					"value": {
+						"value": "@substring(\nreplace(\n    replace(\n        replace(\n            replace(\n                replace(\n                    utcnow(),\n                    '-',\n                    ''),\n                ':',\n                ''),\n            '.',\n            ''),\n        'T',\n        ''),\n    'Z',\n    ''),\n    0, 17)\n",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"concurrency": 1,
+		"policy": {
+			"elapsedTimeMetric": {
+				"duration": "0.0:10:00"
+			}
+		},
+		"parameters": {
+			"tenant_product_file_name": {
+				"type": "string",
+				"defaultValue": "tenant_product.json"
+			}
+		},
+		"variables": {
+			"ConnectionList": {
+				"type": "Array"
+			},
+			"ADFRunId": {
+				"type": "String"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-02-26T14:33:51Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,478 @@
+CREATE TABLE IF NOT EXISTS {table_prefix}_datedimension (
+    id INT,
+    date DATE,
+    day_of_month INT,
+    day_name STRING,
+    week_of_year INT,
+    month INT,
+    month_name STRING,
+    month_name_short STRING,
+    quarter INT,
+    year INT,
+    year_week STRING,
+    year_month STRING,
+    is_today STRING,
+    date2 DATE,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_datedimension';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_timedimension (
+    id INT,
+    hour_of_day INT,
+    minute_of_hour INT,
+    second_of_minute INT,
+    time_label STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_timedimension';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_shiftfact (
+    shift_id INT,
+    worker_id INT,
+    shift_start_datetime TIMESTAMP,
+    shift_start_datetime_utc TIMESTAMP,
+    shift_start_date_id INT,
+    shift_start_date_utc_id INT,
+    shift_end_datetime TIMESTAMP,
+    shift_end_datetime_utc TIMESTAMP,
+    shift_end_date_id INT,
+    shift_end_date_utc_id INT,
+    paid_minutes INT,
+    version_start TIMESTAMP,
+    version_end TIMESTAMP 
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_shiftfact'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_shiftdimension (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    shift_reference STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_shiftdimension';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_workerdimension (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    worker_reference STRING,
+    WorkerID INT,
+    Name STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_workerdimension';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_activityfact (
+    activity_id INT,
+    shift_id INT,
+    worker_id INT,
+    task_id INT,
+    activity_start_datetime TIMESTAMP,
+    activity_start_datetime_utc TIMESTAMP,
+    activity_start_date_id INT,
+    activity_start_time_id INT,
+    activity_start_date_utc_id INT,
+    activity_end_datetime TIMESTAMP,
+    activity_end_datetime_utc TIMESTAMP,
+    activity_end_date_id INT,
+    activity_end_time_id INT,
+    activity_end_date_utc_id INT,
+    activity_start_latitude DOUBLE,
+    activity_start_longitude DOUBLE,
+    activity_start_location_validity BOOLEAN,
+    activity_end_latitude DOUBLE,
+    activity_end_longitude DOUBLE,
+    activity_end_location_validity BOOLEAN,
+    planned_activity_start_datetime TIMESTAMP,
+    planned_activity_start_datetime_utc TIMESTAMP,
+    planned_activity_start_date_id INT,
+    planned_activity_start_date_utc_id INT,
+    planned_activity_end_datetime TIMESTAMP,
+    planned_activity_end_datetime_utc TIMESTAMP,
+    planned_activity_end_date_id INT,
+    planned_activity_end_date_utc_id INT,
+    planned_activity_start_latitude DOUBLE,
+    planned_activity_start_longitude DOUBLE,
+    planned_activity_start_location_validity BOOLEAN,
+    planned_activity_end_latitude DOUBLE,
+    planned_activity_end_longitude DOUBLE,
+    planned_activity_end_location_validity BOOLEAN,
+    activity_type_id INT,
+    version_start TIMESTAMP,
+    version_end TIMESTAMP 
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_activityfact'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_activitydimension (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    activity_reference STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_activitydimension';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_activitytypedimension (
+    id INT,
+    activity_type STRING,
+    timeline_type STRING,
+    productivity_type STRING,
+    productivity_type_group STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_activitytypedimension';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_taskdimension (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    task_reference STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_taskdimension';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_shiftkpifact (
+    shift_id INT,
+    worker_id INT,
+    shift_start_date_id INT,
+    kpi_id INT,
+    kpi_value FLOAT,
+    kpi_norm_value DECIMAL(5, 2),
+    version_start TIMESTAMP,
+    version_end TIMESTAMP 
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_shiftkpifact'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_shiftkpafact (
+    shift_id INT,
+    worker_id INT,
+    shift_start_date_id INT,
+    kpa_id INT,
+    avg_kpi_value FLOAT,
+    avg_kpi_norm_value DECIMAL(5, 2),
+    version_start TIMESTAMP,
+    version_end TIMESTAMP 
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_shiftkpafact'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_shiftkpioverallfact (
+    shift_id INT,
+    worker_id INT,
+    shift_start_date_id INT,
+    avg_kpi_value FLOAT,
+    avg_kpi_norm_value DECIMAL(5, 2),
+    version_start TIMESTAMP,
+    version_end TIMESTAMP 
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_shiftkpioverallfact'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_shiftkpaoverallfact (
+    shift_id INT,
+    worker_id INT,
+    shift_start_date_id INT,
+    avg_kpa_value FLOAT,
+    avg_kpa_norm_value DECIMAL(5, 2),
+    version_start TIMESTAMP,
+    version_end TIMESTAMP 
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_shiftkpaoverallfact'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_kpidimension (
+    id INT,
+    kpi_code STRING,
+    kpi_name_en_gb STRING,
+    kpi_name_de_de STRING,
+    kpi_name_fr_fr STRING,
+    kpa_id INT,
+    display_order INT 
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_kpidimension';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_kpadimension (
+    id INT,
+    kpa_code STRING,
+    kpa_name_en_gb STRING,
+    kpa_name_de_de STRING,
+    kpa_name_fr_fr STRING,
+    display_order INT 
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_kpadimension';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_pbitimeintervals (
+    interval INT,
+    interval_description_en_gb STRING,
+    interval_description_fr_fr STRING,
+    interval_description_de_de STRING 
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_pbitimeintervals';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_tenantconfig (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    name STRING,
+    revision_datetime TIMESTAMP,
+    value STRING
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_tenantconfig';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_kpitargetconfig (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    kpi_id INT,
+    revision_datetime TIMESTAMP,
+    target_value FLOAT
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_kpitargetconfig';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_pbivalueparameter (
+    value INT,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_pbivalueparameter';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_pbidateparameter (
+    date DATE,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_pbidateparameter';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_pbitimeparameter (
+    time STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_pbitimeparameter';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_pbilabels (
+    id INT,
+    label_en_gb STRING,
+    label_fr_fr STRING,
+    label_de_de STRING,
+    color STRING
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_pbilabels';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_shiftexclusionfact (
+    shift_id BIGINT,
+    exclusion_reason_id BIGINT,
+    version_start TIMESTAMP,
+    version_end TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_shiftexclusionfact';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_shiftexclusionreasondimension (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    reason_code STRING,
+    version_start TIMESTAMP,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_shiftexclusionreasondimension';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_pbikpidimensionoperational (
+    kpi_id INT,
+    kpi_code STRING,
+    kpi_name_en STRING,
+    kpi_name_de STRING,
+    display_order INT,
+    load_date TIMESTAMP
+)        
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_pbikpidimensionoperational';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_taskfact (
+    task_id INT,
+    worker_id INT,
+    shift_id INT,
+    task_created_datetime TIMESTAMP,
+    task_created_datetime_utc TIMESTAMP,
+    task_start_datetime TIMESTAMP,
+    task_start_datetime_utc TIMESTAMP,
+    task_end_datetime TIMESTAMP,
+    task_end_datetime_utc TIMESTAMP,
+    planned_task_start_datetime TIMESTAMP,
+    planned_task_start_datetime_utc TIMESTAMP,
+    planned_task_end_datetime TIMESTAMP,
+    planned_task_end_datetime_utc TIMESTAMP,
+    version_start TIMESTAMP,
+    version_end TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_taskfact'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_taskstatusdimension (
+  id INT,
+  status STRING,
+  detailed_status STRING,
+  detailed_status_en_gb STRING,
+  display_order INT,
+  include_in_report BOOLEAN,
+  load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_taskstatusdimension'
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_taskstatusfact (
+    task_id INT,
+    shift_id INT,
+    status_id INT,
+    status_start_datetime TIMESTAMP,
+    status_start_datetime_utc TIMESTAMP,
+    status_end_datetime TIMESTAMP,
+    status_end_datetime_utc TIMESTAMP,
+    version_start TIMESTAMP,
+    version_end TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_taskstatusfact'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_pbitranslatedlocalizedlabels (
+    id INT,
+    user_culture STRING,
+    translation STRING,
+    used_for STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_pbitranslatedlocalizedlabels';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_pbitranslations (
+    language_id STRING,
+    language STRING,
+    user_culture STRING,
+    display_order INT
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_pbitranslations';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_taskgeoroutefact (
+    shift_id INT,
+    task_id INT,
+    task_source_latitude DOUBLE,
+    task_source_longitude DOUBLE,
+    planned_start_datetime_utc TIMESTAMP,
+    task_status_id INT,
+    task_target_latitude DOUBLE,
+    task_target_longitude DOUBLE,
+    task_order INT,
+    version_start TIMESTAMP,
+    version_end TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_taskgeoroutefact'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_activitytimelinefact (
+    shift_id INT,
+    activity_id INT,
+    activity_type_id INT,
+    activity_timeline_context_type_id INT,
+    activity_start_datetime_utc TIMESTAMP,
+    activity_end_datetime_utc TIMESTAMP,
+    version_start TIMESTAMP,
+    version_end TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_activitytimelinefact'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_tasklateststatusfact (
+    shift_id INT,
+    task_id INT,
+    latest_status_id INT,
+    latest_status_start_datetime TIMESTAMP,
+    latest_status_start_datetime_utc TIMESTAMP,
+    latest_status_end_datetime TIMESTAMP,
+    latest_status_end_datetime_utc TIMESTAMP,
+    task_order_desc INT,
+    version_start TIMESTAMP,
+    version_end TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_tasklateststatusfact'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_timelinecontexttypedimension (
+    id INT,
+    timeline_context_type STRING,
+    display_order INT,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_timelinecontexttypedimension';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_pbikpitargetconfig (
+    kpi_id INT,
+    red_value_reference DOUBLE,
+    amber_value_reference DOUBLE,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_pbikpitargetconfig';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_pbiworkershiftsheader (
+    name STRING,
+    group STRING,
+    display_order INT,
+    load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_pbiworkershiftsheader';
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_taskstatusgroupdimension (
+  id INT,
+  status STRING,
+  detailed_status STRING,
+  detailed_status_en_gb STRING,
+  status_group STRING,
+  status_group_en_gb STRING,
+  include_in_report BOOLEAN,
+  display_order INT,
+  load_date TIMESTAMP
+)
+USING DELTA
+LOCATION '{gold_location}/{table_prefix}_taskstatusgroupdimension'

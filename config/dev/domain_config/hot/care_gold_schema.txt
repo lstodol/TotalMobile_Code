@@ -1,0 +1,90 @@
+CREATE TABLE IF NOT EXISTS {table_prefix}_dim_date (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    calendar_date DATE,
+    year INT,
+    month INT,
+    month_name STRING,
+    month_name_short CHAR(3),
+    day_of_month INT,
+    day_of_week INT,
+    day_name STRING,
+    day_of_year INT,
+    week_of_year INT,
+    quarter_of_year INT,
+    last_day_of_month CHAR(1),
+    year_week STRING,
+    year_month STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+CLUSTER BY (calendar_date)
+LOCATION '{gold_location}/{table_prefix}_dim_date'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true',
+    'delta.autoOptimize.autoCompact'='true', 
+    'delta.autoOptimize.optimizeWrite'='true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dim_user (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    user_key STRING,
+    user_name STRING,
+    deleted STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+CLUSTER BY (user_key)
+LOCATION '{gold_location}/{table_prefix}_dim_user'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true',
+    'delta.autoOptimize.autoCompact'='true', 
+    'delta.autoOptimize.optimizeWrite'='true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dim_subject (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    subject STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+CLUSTER BY (subject)
+LOCATION '{gold_location}/{table_prefix}_dim_subject'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true',
+    'delta.autoOptimize.autoCompact'='true', 
+    'delta.autoOptimize.optimizeWrite'='true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_dim_status (
+    id BIGINT GENERATED ALWAYS AS IDENTITY,
+    status INT,
+    status_description STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+CLUSTER BY (status)
+LOCATION '{gold_location}/{table_prefix}_dim_status'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true',
+    'delta.autoOptimize.autoCompact'='true', 
+    'delta.autoOptimize.optimizeWrite'='true'
+);
+
+CREATE TABLE IF NOT EXISTS {table_prefix}_fact_bulletins (
+    unique_key STRING NOT NULL,
+    dim_date_id BIGINT NOT NULL,
+    dim_user_id BIGINT NOT NULL,
+    dim_subject_id BIGINT NOT NULL,
+    dim_status_id BIGINT NOT NULL,
+    message_time TIMESTAMP,
+    category STRING,
+    load_date TIMESTAMP
+)
+USING DELTA
+CLUSTER BY (unique_key, dim_user_id)
+LOCATION '{gold_location}/{table_prefix}_fact_bulletins'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true',
+    'delta.autoOptimize.autoCompact'='true', 
+    'delta.autoOptimize.optimizeWrite'='true'
+)

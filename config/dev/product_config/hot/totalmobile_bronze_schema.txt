@@ -1,0 +1,17 @@
+CREATE TABLE IF NOT EXISTS {table_prefix}_bulletin (
+    unique_key STRING,
+    category STRING,
+    subject STRING,
+    event_time TIMESTAMP, 
+    status INT,
+    recipients ARRAY<STRUCT<user_key: STRING, name: STRING, attributes: ARRAY<MAP<STRING, STRING>>>>,
+    load_date TIMESTAMP
+)
+USING DELTA
+CLUSTER BY (unique_key)
+LOCATION '{bronze_location}/{table_prefix}_bulletin'
+TBLPROPERTIES (
+    'delta.enableChangeDataFeed' = 'true',
+    'delta.autoOptimize.autoCompact'='true', 
+    'delta.autoOptimize.optimizeWrite'='true'
+)

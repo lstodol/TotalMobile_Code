@@ -1,0 +1,46 @@
+parameters:
+- name: workingDirectory
+  type: string
+  default: /
+
+- name: packageJsonFolder
+  type: string
+  default: /
+
+jobs:
+- job: BUILD
+  displayName: 'Build ADF ARM Template'
+  variables:
+    dataFactoryResourceId: /subscriptions/temp-build-subscription/resourceGroups/temp-build-resource-group/providers/Microsoft.DataFactory/factories/temp-build-factory
+
+  steps:
+  - task: NodeTool@0
+    inputs:
+      versionSource: 'spec'
+      versionSpec: '18.x'
+      checkLatest: true
+
+  - task: Npm@1
+    inputs:
+      command: 'install'
+      workingDir: ${{parameters.packageJsonFolder}}
+      verbose: true
+    displayName: 'Install npm package'
+
+  - task: Npm@1
+    inputs:
+      command: 'custom'
+      workingDir: ${{parameters.packageJsonFolder}}
+      customCommand: 'run build validate ${{parameters.workingDirectory}} ${{variables.dataFactoryResourceId}}'
+    displayName: 'Validate ADF'
+
+  - task: Npm@1
+    inputs:
+      command: 'custom'
+      workingDir: ${{parameters.packageJsonFolder}}
+      customCommand: 'run build export ${{parameters.workingDirectory}} ${{variables.dataFactoryResourceId}} "/adf_publish"'
+    displayName: 'Generate ADF ARM template'
+
+  - publish: ${{parameters.packageJsonFolder}}/adf_publish
+    displayName: 'Publish ADF Build Artifacts'
+    artifact: adf_drop

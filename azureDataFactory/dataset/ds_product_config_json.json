@@ -1,0 +1,78 @@
+{
+	"name": "ds_product_config_json",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_analytics_dls",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"ProductName": {
+				"type": "string"
+			}
+		},
+		"folder": {
+			"name": "config"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": {
+					"value": "@concat(dataset().ProductName, '.json')",
+					"type": "Expression"
+				},
+				"folderPath": "product_config",
+				"fileSystem": "config"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"ProductName": {
+					"type": "string"
+				},
+				"SchemaList": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"SchemaName": {
+								"type": "string"
+							},
+							"TableList": {
+								"type": "array",
+								"items": {
+									"type": "object",
+									"properties": {
+										"TableName": {
+											"type": "string"
+										},
+										"HistoryTableName": {
+											"type": "string"
+										},
+										"PrimaryKeyColumn": {
+											"type": "string"
+										},
+										"LoadType": {
+											"type": "string"
+										},
+										"TableType": {
+											"type": "string"
+										},
+										"IncrementalColumn": {
+											"type": "string"
+										},
+										"HistoryIncrementalColumn": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,399 @@
+{
+	"name": "data_sharing_loop",
+	"properties": {
+		"activities": [
+			{
+				"name": "Push Each Layer",
+				"type": "ForEach",
+				"dependsOn": [
+					{
+						"activity": "Set Data Push Layer",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@variables('DataPushLayer')",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 20,
+					"activities": [
+						{
+							"name": "Read Latest Checkpoint",
+							"type": "Lookup",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.00:15:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "ParquetSource",
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": true,
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "ParquetReadSettings"
+									}
+								},
+								"dataset": {
+									"referenceName": "ds_data_push_checkpoint",
+									"type": "DatasetReference",
+									"parameters": {
+										"Tenant": {
+											"value": "@pipeline().parameters.TenantName",
+											"type": "Expression"
+										},
+										"Product": {
+											"value": "@pipeline().parameters.ProductName",
+											"type": "Expression"
+										},
+										"Layer": {
+											"value": "@item()",
+											"type": "Expression"
+										}
+									}
+								}
+							}
+						},
+						{
+							"name": "Set Checkpoint",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Read Latest Checkpoint",
+									"dependencyConditions": [
+										"Completed"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "LastModifiedFrom",
+								"value": {
+									"value": "@if(\n    contains(\n        activity('Read Latest Checkpoint').output, 'firstRow'\n        ),\n    activity('Read Latest Checkpoint').output.firstRow.LastModifiedFrom,\n    '1900-01-01T00:00:00Z'\n)",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Save New Checkpoint",
+							"type": "Copy",
+							"dependsOn": [
+								{
+									"activity": "Push Each Folder",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"timeout": "0.01:00:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"source": {
+									"type": "JsonSource",
+									"additionalColumns": [
+										{
+											"name": "LastModifiedFrom",
+											"value": {
+												"value": "@pipeline().parameters.LastModifiedTo",
+												"type": "Expression"
+											}
+										}
+									],
+									"storeSettings": {
+										"type": "AzureBlobFSReadSettings",
+										"recursive": false,
+										"wildcardFolderPath": "tenant_config",
+										"wildcardFileName": "*.json",
+										"enablePartitionDiscovery": false
+									},
+									"formatSettings": {
+										"type": "JsonReadSettings"
+									}
+								},
+								"sink": {
+									"type": "ParquetSink",
+									"storeSettings": {
+										"type": "AzureBlobFSWriteSettings"
+									},
+									"formatSettings": {
+										"type": "ParquetWriteSettings"
+									}
+								},
+								"enableStaging": false,
+								"parallelCopies": 1,
+								"dataIntegrationUnits": 2,
+								"translator": {
+									"type": "TabularTranslator",
+									"mappings": [
+										{
+											"source": {
+												"path": "$['LastModifiedFrom']"
+											},
+											"sink": {
+												"name": "LastModifiedFrom",
+												"type": "String"
+											}
+										}
+									]
+								}
+							},
+							"inputs": [
+								{
+									"referenceName": "ds_product_tenant_folder",
+									"type": "DatasetReference"
+								}
+							],
+							"outputs": [
+								{
+									"referenceName": "ds_data_push_checkpoint",
+									"type": "DatasetReference",
+									"parameters": {
+										"Tenant": {
+											"value": "@pipeline().parameters.TenantName",
+											"type": "Expression"
+										},
+										"Product": {
+											"value": "@pipeline().parameters.ProductName",
+											"type": "Expression"
+										},
+										"Layer": {
+											"value": "@item()",
+											"type": "Expression"
+										}
+									}
+								}
+							]
+						},
+						{
+							"name": "Get Folder List",
+							"type": "GetMetadata",
+							"dependsOn": [],
+							"policy": {
+								"timeout": "0.00:15:00",
+								"retry": 0,
+								"retryIntervalInSeconds": 30,
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"dataset": {
+									"referenceName": "ds_data_sharing_renfrewshire_src",
+									"type": "DatasetReference",
+									"parameters": {
+										"TenantName": "@pipeline().parameters.TenantName",
+										"ProductName": "@pipeline().parameters.ProductName",
+										"Layer": "@item()",
+										"FolderName": "default"
+									}
+								},
+								"fieldList": [
+									"childItems"
+								],
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								},
+								"formatSettings": {
+									"type": "BinaryReadSettings"
+								}
+							}
+						},
+						{
+							"name": "Filter Relevant Folders",
+							"type": "Filter",
+							"dependsOn": [
+								{
+									"activity": "Get Folder List",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"userProperties": [],
+							"typeProperties": {
+								"items": {
+									"value": "@activity('Get Folder List').output.childItems",
+									"type": "Expression"
+								},
+								"condition": {
+									"value": "@and(\n    and(not(contains(item().name, 'job_audit')), \n    not(contains(item().name, 'task_audit'))),\n    contains(item().name, pipeline().parameters.ProductName)\n)\n",
+									"type": "Expression"
+								}
+							}
+						},
+						{
+							"name": "Push Each Folder",
+							"type": "ExecutePipeline",
+							"dependsOn": [
+								{
+									"activity": "Set Checkpoint",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								},
+								{
+									"activity": "Set Folder List Variable",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "data_sharing_nested_loop",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"FolderList": {
+										"value": "@variables('FolderList')",
+										"type": "Expression"
+									},
+									"TenantName": {
+										"value": "@pipeline().parameters.TenantName",
+										"type": "Expression"
+									},
+									"ProductName": {
+										"value": "@pipeline().parameters.ProductName",
+										"type": "Expression"
+									},
+									"Layer": {
+										"value": "@item()",
+										"type": "Expression"
+									},
+									"LastModifiedFrom": {
+										"value": "@variables('LastModifiedFrom')",
+										"type": "Expression"
+									},
+									"LastModifiedTo": {
+										"value": "@pipeline().parameters.LastModifiedTo",
+										"type": "Expression"
+									},
+									"TenantStorageAccount": {
+										"value": "@pipeline().parameters.TenantStorageAccount",
+										"type": "Expression"
+									}
+								}
+							}
+						},
+						{
+							"name": "Set Folder List Variable",
+							"type": "SetVariable",
+							"dependsOn": [
+								{
+									"activity": "Filter Relevant Folders",
+									"dependencyConditions": [
+										"Succeeded"
+									]
+								}
+							],
+							"policy": {
+								"secureOutput": false,
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"variableName": "FolderList",
+								"value": {
+									"value": "@activity('Filter Relevant Folders').output.value",
+									"type": "Expression"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "Set Data Push Layer",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "DataPushLayer",
+					"value": {
+						"value": "@split(pipeline().parameters.DataPushLayers, ',')\n\n",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"parameters": {
+			"ConnectionString": {
+				"type": "string"
+			},
+			"TenantName": {
+				"type": "string"
+			},
+			"ProductName": {
+				"type": "string"
+			},
+			"LastModifiedTo": {
+				"type": "string"
+			},
+			"DataPushLayers": {
+				"type": "string"
+			},
+			"TenantStorageAccount": {
+				"type": "string"
+			}
+		},
+		"variables": {
+			"TableList": {
+				"type": "Array"
+			},
+			"ConnectionList": {
+				"type": "Array"
+			},
+			"DataPushLayer": {
+				"type": "Array"
+			},
+			"LastModifiedFrom": {
+				"type": "String"
+			},
+			"name": {
+				"type": "String"
+			},
+			"FolderList": {
+				"type": "Array"
+			}
+		},
+		"folder": {
+			"name": "others"
+		},
+		"annotations": [],
+		"lastPublishTime": "2024-03-11T10:48:24Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

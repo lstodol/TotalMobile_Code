@@ -1,0 +1,7 @@
+{
+	"name": "primarySqlDbManagedPrivateEndpoint",
+	"properties": {
+		"privateLinkResourceId": "/subscriptions/86584f4f-c24e-4ba4-b113-fe6e03be28f5/resourceGroups/paas-mob-health-uks/providers/Microsoft.Sql/servers/sql-mob-hlth-uks",
+		"groupId": "sqlServer"
+	}
+}
