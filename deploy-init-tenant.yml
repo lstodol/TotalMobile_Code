@@ -1,0 +1,79 @@
+parameters:
+  - name: environment
+    type: string
+  - name: azureSubscription
+    type: string
+  - name: enabled
+    type: boolean
+  - name: hotdeploy
+    type: boolean
+
+jobs:
+- deployment: DeployInitTenant
+  displayName: Tenant Initialisation
+  dependsOn: 
+  - DeployDatabricks
+  - DeployConfig
+  environment: ${{parameters.environment}}
+  condition: or(${{parameters.enabled}}, ${{parameters.hotdeploy}})
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+          - task: UsePythonVersion@0
+            displayName: 'Use Python 3.9 for 12.2.x-scala2.12'
+            inputs:
+              versionSpec: 3.9
+          - checkout: self
+          - task: AzureKeyVault@2
+            displayName: Configuration
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              KeyVaultName: $(keyVaultName)
+              SecretsFilter: '*'
+              RunAsPreJob: false 
+          - task: AzureCLI@2
+            name: SetupCLI
+            displayName: 'Setup CLI'
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |        
+                bash ./pipelines/databricksScripts/configure_CLI.sh \
+                            "$(dbx-workspace-url)" \
+                            ./config/$(env)/global_config/jobs.json
+                #outputs variables: accesstoken, authheader, pattoken, clusterid
+          - task: AzureCLI@2
+            name: ExecuteTenantInit
+            displayName: 'Execute Tenant Initialisation Notebook'
+            condition: ${{parameters.enabled}}
+            inputs:
+              azureSubscription:  ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                      pip install -r $(Build.Repository.LocalPath)/src/requirements.txt
+                      python $(Build.Repository.LocalPath)/pipelines/databricksScripts/execute_notebook.py \
+                            --url https://$(dbx-workspace-url) \
+                            --token $(pattoken) \
+                            --clusterid "$(clusterid)" \
+                            --buildid "$(Build.BuildId)" \
+                            --notebook_path "/Analytics/tenant_initialisation"
+          - task: AzureCLI@2
+            name: ExecuteTenantInitHot
+            condition: ${{parameters.hotdeploy}}
+            displayName: 'Execute Tenant Initialisation Hot Notebook'
+            inputs:
+              azureSubscription:  ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                      pip install -r $(Build.Repository.LocalPath)/src/requirements.txt
+                      python $(Build.Repository.LocalPath)/pipelines/databricksScripts/execute_notebook.py \
+                            --url https://$(dbx-workspace-url) \
+                            --token $(pattoken) \
+                            --clusterid "$(clusterid)" \
+                            --buildid "$(Build.BuildId)" \
+                            --notebook_path "/Analytics/tenant_initialisation_hot"

@@ -1,0 +1,84 @@
+parameters:
+  - name: environment
+    type: string
+  - name: azureSubscription
+    type: string
+
+jobs:
+- deployment: PostDeployment
+  displayName: Post deployment's activities
+  environment: ${{parameters.environment}}
+  condition: always()
+  dependsOn: 
+  - TestingShakedown
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+          - task: AzureKeyVault@2
+            displayName: Configuration
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              KeyVaultName: $(keyVaultName)
+              SecretsFilter: '*'
+              RunAsPreJob: false 
+          - task: AzureCLI@2
+            displayName: Approve Managed Private Endpoints
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |
+                resourceGroupName=$(resourceGroupName)
+                storageAccount=$(storage-account-name) 
+                keyVault=$(keyVaultName)
+                dataSharingStorages=$(data-sharing-storages)
+
+                # List all private endpoints in the resource group
+                privateEndpointIdsStorage=$(az network private-endpoint-connection list -g $resourceGroupName --type Microsoft.Storage/storageAccounts	-n $storageAccount --query "[].{Id: id}" --output tsv)
+                privateEndpointIdsKeyVault=$(az network private-endpoint-connection list -g $resourceGroupName --type Microsoft.Keyvault/vaults	-n $keyVault --query "[].{Id: id}" --output tsv)
+
+                privateEndpointIds=("$privateEndpointIdsStorage" "$privateEndpointIdsKeyVault")
+
+                dataSharingStoragesArray=($(echo $dataSharingStorages | tr "," "\n"))
+
+                for storage in "${dataSharingStoragesArray[@]}"; do
+                  ids=$(az network private-endpoint-connection list -g $resourceGroupName --type Microsoft.Storage/storageAccounts	-n $storage --query "[].{Id: id}" --output tsv)
+
+                  for id in "${ids[@]}"; do
+                    privateEndpointIds+=($id)
+                  done
+                  
+                done
+
+                echo "List of private enpoints ids: ${privateEndpointIds[@]}"
+
+                for endpointId in "${privateEndpointIds[@]}"; do
+                    
+                    echo "endpointId: $endpointId"
+                    connectionStatus=$(az network private-endpoint-connection show --id $endpointId --query "properties.privateLinkServiceConnectionState.status" --output tsv)
+                  
+                    echo "connectionStatus: $connectionStatus"
+                    # Check if the connection status is "Pending"
+                    if [ "$connectionStatus" == "Pending" ]; then
+                        echo "Found a private endpoint with a pending connection: $endpointId"
+                        
+                        # Approve the private endpoint connection
+                        az network private-endpoint-connection approve --id $endpointId      
+                        echo "Approved the private endpoint connection: $endpointId"
+                    fi
+                done
+
+          - task: AzureCLI@2
+            displayName: Disable network traffic 
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |
+                az storage account update --name $(storage-account-name) --resource-group $(resourceGroupName) --default-action Deny
+                az keyvault update --resource-group $(resourceGroupName) --name $(keyVaultName) --default-action Deny
+
+

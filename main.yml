@@ -1,0 +1,452 @@
+ 
+trigger: 
+  batch: true
+  branches:
+    include:
+    - main
+    exclude:
+    - features/*
+  paths:
+    exclude:
+    - README.md
+    - pipelines/*
+    - azureDataFactory/*
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+parameters:
+  - name: unittests
+    displayName: Run Unit Tests
+    type: boolean
+    default: true
+
+  - name: inttests
+    displayName: Run Integration Tests
+    type: boolean
+    default: true
+
+  - name: devdeploy
+    displayName: Deploy to Dev
+    type: boolean
+    default: false
+
+  - name: qadeploy
+    displayName: Deploy to Qa
+    type: boolean
+    default: false
+
+  - name: nftdeploy
+    displayName: Deploy to Nft
+    type: boolean
+    default: false
+
+  - name: uatdeploy
+    displayName: Deploy to Uat
+    type: boolean
+    default: false
+
+  - name: proddeploy
+    displayName: Deploy to Prod
+    type: boolean
+    default: false
+   
+  - name: inittenant
+    displayName: Run Init Tenant Notebook
+    type: boolean
+    default: false
+
+  - name: shakedowntest
+    displayName: Run Shakedown Test
+    type: boolean
+    default: false
+
+  - name: hotdeploy
+    displayName: Deploy Hot Path
+    type: boolean
+    default: true
+
+
+stages:
+- stage: Build
+  variables:
+  - group: 'Analytics Unity Dev'
+
+  jobs:
+  - template: azureDataFactory/build-adf.yml
+    parameters:
+      workingDirectory: $(Build.Repository.LocalPath)/azureDataFactory
+      packageJsonFolder: $(Build.Repository.LocalPath)/pipelines/azureDataFactory
+  
+  - job: 'PublishArtifacts'
+    displayName: 'Publish Build Artifacts'
+    steps:      
+      - script: |
+          mkdir -p $(Build.BinariesDirectory)/databricks
+          mkdir -p $(Build.BinariesDirectory)/databricks/notebooks
+          cp $(Build.Repository.LocalPath)/src/*.py $(Build.BinariesDirectory)/databricks/notebooks
+
+          mkdir -p $(Build.BinariesDirectory)/databricks/modules
+          cp $(Build.Repository.LocalPath)/src/modules/ $(Build.BinariesDirectory)/databricks -r
+        displayName: 'Copy Warm Artifacts'
+
+      - script: |
+          mkdir -p $(Build.BinariesDirectory)/databricks/hot
+          cp $(Build.Repository.LocalPath)/src/hot/ $(Build.BinariesDirectory)/databricks -r
+        displayName: 'Copy Hot Artifacts'
+        condition: and(succeeded(), ${{ parameters.hotdeploy }})
+
+      - publish: $(Build.BinariesDirectory)/databricks
+        displayName: 'Publish Databricks Build Artifacts'
+        artifact: databricks_drop
+
+  - template: ./pre-deployment.yml
+    parameters: 
+      environment: 'Analytics Unity NonProd'
+      azureSubscription: 'Unity Data Dev'
+
+  - job: 'RunTestsOnDEV'
+    displayName: "Run Tests On IntTests-DEV"
+    dependsOn: 
+     - PublishArtifacts
+     - PreDeployment
+    condition: or(${{parameters.unittests}}, ${{parameters.inttests}})
+    variables:
+    - group: 'Analytics Unity Dev'
+    steps:
+      - checkout: self
+      - task: UsePythonVersion@0
+        displayName: 'Use Python 3.9 for 12.2.x-scala2.12'
+        inputs:
+          versionSpec: 3.9
+
+      - download: current
+        artifact: databricks_drop
+        displayName: 'Download Build Artifacts'
+      - task: AzureKeyVault@2
+        inputs:
+          azureSubscription: 'Unity Data Dev'
+          KeyVaultName: $(keyVaultName)
+          SecretsFilter: '*'
+          RunAsPreJob: false 
+      - task: AzureCLI@2
+        name: ConfigureCLI
+        displayName: Databricks CLI Configuration
+        inputs:
+          azureSubscription: 'Unity Data Dev'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            bash ./pipelines/databricksScripts/configure_CLI.sh \
+                          $(dbx-workspace-url) \
+                          ./config/$(env)/global_config/jobs.json
+      - script: |
+          pip install -r ./src/requirements.txt
+        displayName: 'Load Python dependencies'
+      - task: AzureCLI@2
+        name: ImportTestNotebooks
+        displayName: 'Import Artifacts to Integration Test Area of Databricks'
+        inputs:
+          azureSubscription: 'Unity Data Dev'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            echo "Creating Workspace folder"
+            databricks workspace delete --recursive /IntTests
+            databricks workspace mkdirs /IntTests
+            
+            echo "Copying modules folder"
+            databricks workspace mkdirs /IntTests/modules
+            databricks workspace import-dir $(Pipeline.Workspace)/databricks_drop/modules /IntTests/modules
+
+            if [ -d "$(Pipeline.Workspace)/databricks_drop/hot" ]; then
+              echo "Copying hot folder"
+              databricks workspace delete --recursive /IntTests/hot
+              databricks workspace mkdirs /IntTests/hot
+              databricks workspace import-dir $(Pipeline.Workspace)/databricks_drop/hot /IntTests/hot
+            else
+              echo "Hot directory does not exist, skipping copy"
+            fi
+
+            echo "$(accesstoken), $(authheader), $(pattoken), $(clusterid)"
+            echo "Importing Workspace Notebooks"
+            bash $(Build.Repository.LocalPath)/pipelines/databricksScripts/import_notebooks.sh \
+                        "$(Pipeline.Workspace)/databricks_drop/notebooks" \
+                        "$(authheader)" \
+                        "$(dbx-workspace-url)" \
+                        "IntTests"
+            
+            databricks workspace mkdirs /IntTests/tests
+            databricks workspace import-dir $(Build.Repository.LocalPath)/src/tests /IntTests/tests
+      - task: AzureCLI@2
+        name: RunUnitTests
+        displayName: 'Run Unit Tests'
+        condition: ${{parameters.unittests}}
+        inputs:
+          azureSubscription: 'Unity Data Dev'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            echo 'START: running unit tests'
+            python $(Build.Repository.LocalPath)/pipelines/databricksScripts/execute_notebook.py \
+                              --url https://$(dbx-workspace-url) \
+                              --token $(pattoken) \
+                              --clusterid "$(clusterid)" \
+                              --buildid "$(Build.BuildId)" \
+                              --notebook_path "/IntTests/tests/units/runner"
+            echo 'END: running unit tests'
+      - task: AzureCLI@2
+        name: RunIntTests
+        displayName: 'Run Integration Tests'
+        condition: ${{parameters.inttests}}
+        inputs:
+          azureSubscription: 'Unity Data Dev'
+          scriptType: 'bash'
+          scriptLocation: 'inlineScript'
+          inlineScript: |
+            echo 'START: running integration tests'
+            python $(Build.Repository.LocalPath)/pipelines/databricksScripts/execute_notebook.py \
+                              --url https://$(dbx-workspace-url) \
+                              --token $(pattoken) \
+                              --clusterid "$(clusterid)" \
+                              --buildid "$(Build.BuildId)" \
+                              --notebook_path "/IntTests/tests/integrations/create_and_run_job_with_tests"
+            echo 'END: running integration tests'
+            
+      - script: |
+          local_test_results=$(Build.Repository.LocalPath)/logs/xml
+          mkdir -p $local_test_results
+          databricks fs cp --overwrite --recursive dbfs:/analytics/test_results/$(Build.BuildId) $local_test_results
+        displayName: 'Copy tests results'
+      - task: PublishTestResults@2
+        displayName: Publish Tests Results
+        inputs:
+          testResultsFiles: '**/TEST-*.xml'
+          failTaskOnFailedTests: true
+          publishRunAttachments: true
+
+
+  - job: 'TestingShakedown'
+    displayName: "artificial task for test"
+    dependsOn: 
+     - RunTestsOnDEV
+
+  - template: ./post-deployment.yml
+    parameters: 
+      environment: 'Analytics Unity NonProd'
+      azureSubscription: 'Unity Data Dev'
+
+- stage: Dev
+  displayName: Deploy to DEV
+  dependsOn: Build
+  condition: and(succeeded(), ${{ parameters.devdeploy }})
+  variables:
+  - group: 'Analytics Unity Dev'
+  jobs:
+    - template: ./pre-deployment.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+    - template: ./deploy-config.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: true
+    - template: ./azureDataFactory/deploy-adf.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: true
+    - template: ./databricksScripts/deploy-databricks.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: true
+        hotdeploy: ${{ parameters.hotdeploy }}
+    - template: ./databricksScripts/deploy-init-tenant.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: ${{ parameters.inittenant }}
+        hotdeploy: ${{ parameters.hotdeploy }}
+    - template: ./testing-shakedown.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: ${{ parameters.shakedowntest }}
+    - template: ./post-deployment.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        
+- stage: Qa
+  displayName: Deploy to QA
+  dependsOn: Build
+  condition: and(succeeded(), ${{ parameters.qadeploy }})
+  variables:
+  - group: 'Analytics Unity Qa'
+  jobs:
+    - template: ./pre-deployment.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+    - template: ./deploy-config.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: true
+    - template: ./azureDataFactory/deploy-adf.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: true
+    - template: ./databricksScripts/deploy-databricks.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: true
+        hotdeploy: ${{ parameters.hotdeploy }}
+    - template: ./databricksScripts/deploy-init-tenant.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: ${{ parameters.inittenant }}
+        hotdeploy: ${{ parameters.hotdeploy }}
+    - template: ./testing-shakedown.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: ${{ parameters.shakedowntest }}
+    - template: ./post-deployment.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+
+- stage: Nft
+  displayName: Deploy to NFT
+  dependsOn: Build
+  condition: and(succeeded(), ${{ parameters.nftdeploy }})
+  variables:
+  - group: 'Analytics Unity Nft'
+  jobs:
+    - template: ./pre-deployment.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+    - template: ./deploy-config.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: true
+    - template: ./azureDataFactory/deploy-adf.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: true
+    - template: ./databricksScripts/deploy-databricks.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: true
+        hotdeploy: ${{ parameters.hotdeploy }}
+    - template: ./databricksScripts/deploy-init-tenant.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: ${{ parameters.inittenant }}
+        hotdeploy: ${{ parameters.hotdeploy }}
+    - template: ./testing-shakedown.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: ${{ parameters.shakedowntest }}
+    - template: ./post-deployment.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+
+- stage: Uat
+  displayName: Deploy to UAT
+  dependsOn: Build
+  condition: and(succeeded(), ${{ parameters.uatdeploy }})
+  variables:
+  - group: 'Analytics Unity Uat'
+  jobs:
+    - template: ./pre-deployment.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+    - template: ./deploy-config.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: true
+    - template: ./azureDataFactory/deploy-adf.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: true
+    - template: ./databricksScripts/deploy-databricks.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: true
+        hotdeploy: ${{ parameters.hotdeploy }}
+    - template: ./databricksScripts/deploy-init-tenant.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: ${{ parameters.inittenant }}
+        hotdeploy: ${{ parameters.hotdeploy }}
+    - template: ./testing-shakedown.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+        enabled: ${{ parameters.shakedowntest }}
+    - template: ./post-deployment.yml
+      parameters: 
+        environment: 'Analytics Unity NonProd'
+        azureSubscription: 'Unity Data Dev'
+
+- stage: Prod
+  displayName: Deploy to PROD
+  dependsOn: Build
+  condition: and(succeeded(), ${{ parameters.proddeploy }})
+  variables:
+  - group: 'Analytics Unity Prod'
+  jobs:
+    - template: ./pre-deployment.yml
+      parameters: 
+        environment: 'Analytics Unity Prod'
+        azureSubscription: 'Unity Data'
+    - template: ./deploy-config.yml
+      parameters: 
+        environment: 'Analytics Unity Prod'
+        azureSubscription: 'Unity Data'
+        enabled: true
+    - template: ./azureDataFactory/deploy-adf.yml
+      parameters: 
+        environment: 'Analytics Unity Prod'
+        azureSubscription: 'Unity Data'
+        enabled: true
+    - template: ./databricksScripts/deploy-databricks.yml
+      parameters: 
+        environment: 'Analytics Unity Prod'
+        azureSubscription: 'Unity Data'
+        enabled: true
+        hotdeploy: ${{ parameters.hotdeploy }}
+    - template: ./databricksScripts/deploy-init-tenant.yml
+      parameters: 
+        environment: 'Analytics Unity Prod'
+        azureSubscription: 'Unity Data'
+        enabled: ${{ parameters.inittenant }}
+        hotdeploy: ${{ parameters.hotdeploy }}
+    - template: ./testing-shakedown.yml
+      parameters: 
+        environment: 'Analytics Unity Prod'
+        azureSubscription: 'Unity Data'
+        enabled: ${{ parameters.shakedowntest }}
+    - template: ./post-deployment.yml
+      parameters: 
+        environment: 'Analytics Unity Prod'
+        azureSubscription: 'Unity Data'

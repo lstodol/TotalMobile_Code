@@ -1,0 +1,131 @@
+parameters:
+  - name: environment
+    type: string
+  - name: azureSubscription
+    type: string
+  - name: enabled
+    type: boolean
+
+jobs:
+- deployment: TestingShakedown
+  displayName: Shakedown Testing
+  dependsOn: 
+  - DeployADF
+  - DeployInitTenant
+  continueOnError: true
+  environment: ${{parameters.environment}}
+  condition: ${{parameters.enabled}}
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+          - checkout: self
+          - task: AzureKeyVault@2
+            displayName: Check Azure KeyVault
+            continueOnError: false
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              KeyVaultName: $(keyVaultName)
+              SecretsFilter: '*'
+              RunAsPreJob: false 
+          - task: AzureCLI@2
+            displayName: Check Azure Storage Account & Config
+            continueOnError: true
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |
+                storageAccountName=$(storage-account-name)
+                resourceGroupName=$(resource-group-name)
+
+                # Check if the storage account exists and is available
+                storageAccountStatus=$(az storage account show --name $storageAccountName --resource-group $resourceGroupName --query "statusOfPrimary" --output tsv)
+
+                if [ $storageAccountStatus == "available" ]; then
+                  echo "Azure Storage Account is up and running."
+                else
+                  echo "##vso[task.logissue type=error;]Azure Storage Account is not available."
+                  exit 1
+
+                fi
+
+                containerName="config"
+                blobName="/tenant_config/tenant_product.json"
+
+                # Check if the blob exists
+                blobExists=$(az storage blob exists --name $blobName --container-name $containerName --account-name $storageAccountName --query exists --output tsv)
+
+                if [ $blobExists == "true" ]
+                then
+                  echo "Blob exists."
+                else
+                  echo "##vso[task.logissue type=error;]Tenant-Product configuration does not exist."
+                  exit 1
+                fi
+
+          - task: AzureCLI@2
+            displayName: Check Azure Data Factory
+            continueOnError: true
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |
+                dataFactoryName=$(dataFactoryName)
+                pipelineName="_master"
+                resourceGroupName=$(resource-group-name)
+
+                # Check if the pipeline exists
+                pipeline=$(az datafactory pipeline show --name $pipelineName --factory-name $dataFactoryName --resource-group $resourceGroupName --query "name" --output tsv 2>/dev/null)
+
+                if [ -z "$pipeline" ]
+                then
+                  echo "##vso[task.logissue type=error;]The Azure Data Facotry pipeline: $pipelineName does not exist."
+                  exit 1
+                else
+                  echo "Pipeline $pipelineName exist."
+                fi
+          - task: AzureCLI@2
+            name: SetupCLI
+            displayName: 'Setup CLI'
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |        
+                bash ./pipelines/databricksScripts/configure_CLI.sh \
+                            "$(dbx-workspace-url)" \
+                            ./config/$(env)/global_config/jobs.json
+                #outputs variables: accesstoken, authheader, pattoken, clusterid
+          - task: AzureCLI@2
+            displayName: Check Azure Databricks
+            continueOnError: true
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |
+                clusterName="main_runner"
+                jobName="job_wrapper_scheduler"
+
+                cluster_info=$(databricks clusters list | grep -i "$clusterName")
+                if [[ ! -z ${cluster_info} ]] && [[ $(echo $cluster_info | wc -l) = 1 ]];  then
+                  cluster_id=${cluster_info:0:20}
+                  echo "Cluster exists with ID: $cluster_id"
+                else
+                  echo "##vso[task.logissue type=error;]The Azure Databricks cluster: $clusterName does not exist."
+                  exit 1
+                fi
+
+                job_info=$(databricks jobs list | grep -i "$jobName")
+                if [[ ! -z ${job_info} ]] && [[ $(echo $job_info | wc -l) = 1 ]];  then
+                  echo "Job exists: $job_info"
+                else
+                  echo "##vso[task.logissue type=error;]The Azure Databricks job: $jobName does not exist."
+                  exit 1
+                fi

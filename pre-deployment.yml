@@ -1,0 +1,40 @@
+parameters:
+  - name: environment
+    type: string
+  - name: azureSubscription
+    type: string
+
+jobs:
+- deployment: PreDeployment
+  displayName: Pre deployment's activities
+  environment: ${{parameters.environment}}
+  condition: always()
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+          - task: AzureCLI@2
+            displayName: Enable network traffic for KeyVault
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |
+                az keyvault update --resource-group $(resourceGroupName) --name $(keyVaultName) --default-action Allow
+          - task: AzureKeyVault@2
+            displayName: Configuration
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              KeyVaultName: $(keyVaultName)
+              SecretsFilter: '*'
+              RunAsPreJob: false 
+          - task: AzureCLI@2
+            displayName: Enable network traffic for Storage
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |
+                az storage account update --name $(storage-account-name) --resource-group $(resourceGroupName) --default-action Allow

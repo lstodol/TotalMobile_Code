@@ -1,0 +1,40 @@
+parameters:
+  - name: environment
+    type: string
+  - name: azureSubscription
+    type: string
+  - name: enabled
+    type: boolean
+
+jobs:
+- deployment: DeployConfig
+  displayName: Configuration Deployment
+  environment: ${{parameters.environment}}
+  condition: ${{parameters.enabled}}
+  dependsOn: PreDeployment
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+          - checkout: self
+          - task: AzureKeyVault@2
+            displayName: Configuration
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              KeyVaultName: $(keyVaultName)
+              SecretsFilter: '*'
+              RunAsPreJob: false 
+          - task: AzureCLI@2
+            displayName: Copy Configs Files
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |
+                az storage blob upload-batch \
+                                --source $(Build.Repository.LocalPath)/config/$(env) \
+                                --destination config \
+                                --account-name $(storage-account-name) \
+                                --overwrite
+

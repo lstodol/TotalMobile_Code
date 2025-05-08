@@ -1,0 +1,123 @@
+parameters:
+  - name: environment
+    type: string
+  - name: azureSubscription
+    type: string
+  - name: enabled
+    type: boolean
+  - name: hotdeploy
+    type: boolean
+
+jobs:
+- deployment: DeployDatabricks
+  displayName: Databricks Deployment
+  dependsOn: PreDeployment
+  environment: ${{parameters.environment}}
+  condition: ${{parameters.enabled}}
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+          - download: current
+            artifact: databricks_drop
+            displayName: 'Download Build Artifacts'
+          - task: UsePythonVersion@0
+            displayName: 'Use Python 3.9 for 12.2.x-scala2.12'
+            inputs:
+              versionSpec: 3.9
+          - checkout: self
+          - task: AzureKeyVault@2
+            displayName: Configuration
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              KeyVaultName: $(keyVaultName)
+              SecretsFilter: '*'
+              RunAsPreJob: false 
+          - task: AzureCLI@2
+            name: SetupCLI
+            displayName: 'Setup CLI'
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              addSpnToEnvironment: true
+              inlineScript: |        
+                bash ./pipelines/databricksScripts/configure_CLI.sh \
+                            "$(dbx-workspace-url)" \
+                            ./config/$(env)/global_config/jobs.json
+                #outputs variables: accesstoken, authheader, pattoken, clusterid
+          - task: AzureCLI@2
+            name: ImportNotebooks
+            displayName: 'Import Artifacts to Databricks'
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                echo "Creating Workspace folder"
+                databricks workspace delete --recursive /Analytics
+                databricks workspace mkdirs /Analytics
+                
+                echo "Copying modules folder"
+                databricks workspace mkdirs /Analytics/modules
+                databricks workspace import-dir $(Pipeline.Workspace)/databricks_drop/modules /Analytics/modules
+
+                if [ -d "$(Pipeline.Workspace)/databricks_drop/hot" ]; then
+                  echo "Copying hot folder"
+                  databricks workspace delete --recursive /Analytics/hot
+                  databricks workspace mkdirs /Analytics/hot
+                  databricks workspace import-dir $(Pipeline.Workspace)/databricks_drop/hot /Analytics/hot
+                else
+                  echo "Hot directory does not exist, skipping copy"
+                fi
+
+                echo "$(accesstoken), $(authheader), $(pattoken), $(clusterid)"
+                echo "Importing Workspace Notebooks"
+                bash $(Build.Repository.LocalPath)/pipelines/databricksScripts/import_notebooks.sh \
+                            "$(Pipeline.Workspace)/databricks_drop/notebooks" \
+                            "$(authheader)" \
+                            "$(dbx-workspace-url)" \
+                            "Analytics"
+                            
+          - task: AzureCLI@2
+            name: DeployWorkflows
+            displayName: 'Deploy Workflows'
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                echo "Deploying Workflow"
+                bash $(Build.Repository.LocalPath)/pipelines/databricksScripts/create_or_update_job.sh \
+                            "./pipelines/databricksScripts/workflows/job_wrapper_scheduler.json" \
+                            "./config/$(env)/global_config/jobs.json"
+                            
+                bash $(Build.Repository.LocalPath)/pipelines/databricksScripts/create_or_update_job.sh \
+                "./pipelines/databricksScripts/workflows/job_cleanup_scheduler.json" \
+                "./config/$(env)/global_config/jobs.json"
+
+                bash $(Build.Repository.LocalPath)/pipelines/databricksScripts/create_or_update_job.sh \
+                "./pipelines/databricksScripts/workflows/job_monitoring_scheduler.json" \
+                "./config/$(env)/global_config/jobs.json"
+
+                bash $(Build.Repository.LocalPath)/pipelines/databricksScripts/create_or_update_job.sh \
+                "./pipelines/databricksScripts/workflows/job_recovery.json" \
+                "./config/$(env)/global_config/jobs.json"
+
+                bash $(Build.Repository.LocalPath)/pipelines/databricksScripts/create_or_update_job.sh \
+                "./pipelines/databricksScripts/workflows/job_tenant_initialization.json" \
+                "./config/$(env)/global_config/jobs.json"
+
+          - task: AzureCLI@2
+            name: DeployHotWorkflows
+            displayName: 'Deploy Hot Workflows'
+            condition: and(succeeded(), ${{ parameters.hotdeploy }})
+            inputs:
+              azureSubscription: ${{ parameters.azureSubscription }}
+              scriptType: 'bash'
+              scriptLocation: 'inlineScript'
+              inlineScript: |
+                echo "Deploying Workflow"
+                bash $(Build.Repository.LocalPath)/pipelines/databricksScripts/create_or_update_job.sh \
+                "./pipelines/databricksScripts/workflows/hot/job_wrapper_scheduler_hot.json" \
+                "./config/$(env)/global_config/hot/jobs.json"
